@@ -426,9 +426,9 @@
                 }
                  assignedCount++; // 即使沒分配成功也要增加計數避免死循環
             }
-             // 打亂順序，使得最終顯示位置不固定對應類別
-             return shuffleDeck(traits);
-            // return traits;
+             // 返回按 Background, Physiological, Psychological 順序排列的特質
+             // 不要打亂順序，以匹配 animateTraitSelection 的期望
+             return traits;
         }
         // 抽牌 (不變)
         function drawCard(player) { /* ... */
@@ -712,6 +712,7 @@
         // AI 回合邏輯 (邏輯不變)
         function aiTurn() { /* ... */
              if (gameState.currentPhase !== GamePhase.AWAITING_AI_ACTION || gameState.player2.passed) return;
+             // Removed diagnostic log
              setGamePhase(GamePhase.PROCESSING_AI_ACTION);
             const playerState = gameState.player2;
             const opponentState = gameState.player1;
@@ -728,10 +729,13 @@
                 if (bestPlay && (playerState.score.total < opponentState.score.total || bestPlay.score >= 5)) { shouldPlayCard = true; }
                 if (playerState.score.total > opponentState.score.total + 10 && playerState.hand.length <= 3) { shouldPlayCard = false; }
                 if (Math.random() < 0.2 && playerState.hand.length > 0) shouldPlayCard = true;
-                if (Math.random() < 0.1 && shouldPlayCard) shouldPlayCard = false;
+                 if (Math.random() < 0.1 && shouldPlayCard) shouldPlayCard = false;
             }
+             // Action Execution
+             // Removed diagnostic log
              setTimeout(() => {
-                 if (shouldPlayCard && bestPlay) {
+                 if (shouldPlayCard && bestPlay) { // If AI decides to play AND found a valid play (bestPlay is not null)
+                     // Removed diagnostic log
                      const cardToPlay = playerState.hand.splice(bestPlay.cardIndex, 1)[0];
                      playerState.field[bestPlay.fieldName].push(cardToPlay);
                      setMessage(`Opponent played ${cardToPlay.name} to ${bestPlay.fieldName}.`);
@@ -739,32 +743,45 @@
                      checkSynergy(2, bestPlay.fieldName);
                      calculateScores();
                      updateUI();
+                     // Nested setTimeout for Event card removal and state transition
+                     // Removed diagnostic log
                      setTimeout(() => {
-                          if (cardToPlay.type === 'Event') {
+                          if (cardToPlay.type === 'Event') { // This logic is inside the 'play card' block, but AI currently never chooses to play an Event.
                              const cardIndexInField = playerState.field[bestPlay.fieldName].findIndex(c => c.instanceId === cardToPlay.instanceId);
                              if (cardIndexInField > -1) {
                                  const eventCard = playerState.field[bestPlay.fieldName].splice(cardIndexInField, 1)[0];
                                  playerState.discard.push(eventCard);
-                                 calculateScores(); updateUI();
-                             }
-                         }
-                         if (gameState.currentPhase !== GamePhase.GAME_OVER && gameState.currentPhase !== GamePhase.ROUND_OVER) {
-                            handleTurnStartTraits(1); setGamePhase(GamePhase.AWAITING_PLAYER_ACTION);
-                         }
-                     }, 600);
-                 } else {
-                     gameState.player2.passed = true; setMessage("Opponent passed the turn."); updateUI();
-                     if (gameState.player1.passed) { endRound(); }
-                     else { handleTurnStartTraits(1); setGamePhase(GamePhase.AWAITING_PLAYER_ACTION); }
+                                  calculateScores(); updateUI();
+                              }
+                          }
+                         // Removed diagnostic log
+                          // Transition back to player or end round
+                          if (gameState.currentPhase !== GamePhase.GAME_OVER && gameState.currentPhase !== GamePhase.ROUND_OVER) {
+                             handleTurnStartTraits(1); // Apply player's start-of-turn traits
+                             setGamePhase(GamePhase.AWAITING_PLAYER_ACTION); // Set phase back to player
+                          }
+                     }, 600); // Delay for effect processing
+
+                 } else { // AI decides to pass (or couldn't find a valid play like only having Event cards)
+                     gameState.player2.passed = true;
+                     setMessage("Opponent passed the turn.");
+                     updateUI();
+                     // Check if both passed to end round, otherwise transition to player
+                     if (gameState.player1.passed) {
+                         endRound(); // Both passed, end the round
+                     } else {
+                         handleTurnStartTraits(1); // Apply player's start-of-turn traits
+                         setGamePhase(GamePhase.AWAITING_PLAYER_ACTION); // Set phase back to player
+                     }
                  }
-             }, 1200 + Math.random() * 800);
+             }, 1200 + Math.random() * 800); // Delay for AI "thinking"
         }
-        // 結束回合 (加入回合結束特質處理)
+        // 結束回合 (Refined Logic)
         function endRound() {
             setGamePhase(GamePhase.ROUND_OVER);
-            calculateScores(); // 先計算基礎分數
+            calculateScores(); // Calculate scores first
 
-            // 處理回合結束時的特質效果 (例如 Minority)
+            // Apply end-of-round traits
             let p1FinalScore = gameState.player1.score.total;
             let p2FinalScore = gameState.player2.score.total;
 
@@ -780,44 +797,69 @@
                      setTimeout(() => setMessage(`Opponent (${trait.name}) gets a comeback bonus!`), 300);
                 }
             });
-             // 確保分數不為負
+             // Ensure scores are not negative
              p1FinalScore = Math.max(0, p1FinalScore);
              p2FinalScore = Math.max(0, p2FinalScore);
 
-            // 使用最終計算的分數判定勝負
+            // Determine winner and update roundsWon
             let roundWinnerMessage = `Semester ${gameState.round} Over! `;
+            let player1Won = false;
+            let player2Won = false;
             if (p1FinalScore > p2FinalScore) {
                 gameState.player1.roundsWon++;
+                player1Won = true;
                 roundWinnerMessage += ` Player 1 wins the semester (${p1FinalScore} vs ${p2FinalScore}).`;
             } else if (p2FinalScore > p1FinalScore) {
                 gameState.player2.roundsWon++;
+                player2Won = true;
                 roundWinnerMessage += ` Opponent wins the semester (${p2FinalScore} vs ${p1FinalScore}).`;
             } else {
-                gameState.player1.roundsWon++;
+                gameState.player1.roundsWon++; // Both get a point in a tie
                 gameState.player2.roundsWon++;
                 roundWinnerMessage += ` It's a tie! Both players win the semester (${p1FinalScore} vs ${p2FinalScore}).`;
             }
 
-            // 先顯示分數再顯示最終結果
-            gameState.player1.score.total = p1FinalScore; // 更新狀態以正確顯示
+            // Update scores in gameState *before* showing message
+            gameState.player1.score.total = p1FinalScore;
             gameState.player2.score.total = p2FinalScore;
-            updateUICounters(); // 更新分數顯示
-            setTimeout(() => setMessage(roundWinnerMessage), 500); // 延遲顯示最終結果
+            updateUICounters(); // Update score display
 
+            // Show round result message after a short delay
+            setTimeout(() => setMessage(roundWinnerMessage), 500);
+
+            // Check for game over condition
             if (gameState.player1.roundsWon >= 2 || gameState.player2.roundsWon >= 2) {
-                 setTimeout(endGame, 2000);
-                return;
+                 setTimeout(endGame, 2500); // Longer delay before showing game over message
+                return; // Stop further processing for next round
             }
-            setTimeout(() => { /* 準備下一回合邏輯不變 */
-                gameState.round++; clearBoard(); resetRoundState();
-                 if (p1FinalScore < p2FinalScore) { gameState.currentPlayer = 1; }
-                 else if (p2FinalScore < p1FinalScore) { gameState.currentPlayer = 2; }
+
+            // Schedule the start of the next round
+            setTimeout(() => {
+                gameState.round++;
+                clearBoard(); // Clear cards (respecting stayOnField)
+                resetRoundState(); // Reset passed status, selected card, trait uses
+
+                // Determine who starts the next round (loser/tie goes first, or default P1)
+                if (player2Won) { // Opponent won, Player 1 starts
+                    gameState.currentPlayer = 1;
+                } else if (player1Won) { // Player 1 won, Opponent starts
+                    gameState.currentPlayer = 2;
+                } else { // Tie, default to Player 1 starting
+                    gameState.currentPlayer = 1;
+                }
+
                 setMessage(`Starting Semester ${gameState.round}. ${gameState.currentPlayer === 1 ? 'Your' : 'Opponent\'s'} Turn.`);
-                 handleTurnStartTraits(gameState.currentPlayer);
-                 if (gameState.currentPlayer === 1) { setGamePhase(GamePhase.AWAITING_PLAYER_ACTION); }
-                 else { setGamePhase(GamePhase.AWAITING_AI_ACTION); setTimeout(aiTurn, 800); }
-                 updateUI();
-            }, 3000);
+                handleTurnStartTraits(gameState.currentPlayer); // Apply start traits for the new current player
+
+                // Set the game phase for the new turn
+                if (gameState.currentPlayer === 1) {
+                    setGamePhase(GamePhase.AWAITING_PLAYER_ACTION);
+                } else {
+                    setGamePhase(GamePhase.AWAITING_AI_ACTION);
+                    setTimeout(aiTurn, 800); // Start AI turn immediately if AI starts
+                }
+                // updateUI(); // updateUI is called within setGamePhase if it's not title/trait screen
+            }, 3000); // Delay before starting the next round
         }
         // 清理場地 (邏輯不變)
         function clearBoard() { /* ... */
@@ -861,8 +903,10 @@
             const isCardSelected = gameState.currentPhase === GamePhase.CARD_SELECTED;
             const isGameOver = gameState.currentPhase === GamePhase.GAME_OVER;
             updateUICounters();
-            document.getElementById('player1-traits').innerHTML = 'Traits: ' + (gameState.player1.traits.map(t => `<span title="${t.description}">${t.name}</span>`).join(', ') || 'None');
-            document.getElementById('player2-traits').innerHTML = 'Traits: ' + (gameState.player2.traits.map(t => `<span title="${t.description}">${t.name}</span>`).join(', ') || 'None');
+            // Display traits with categories
+            const traitCategories = ['BG', 'PHYS', 'PSY'];
+            document.getElementById('player1-traits').innerHTML = 'Traits: ' + (gameState.player1.traits.map((t, i) => `<span title="${t.description}">${traitCategories[i]}: ${t.name}</span>`).join(', ') || 'None');
+            document.getElementById('player2-traits').innerHTML = 'Traits: ' + (gameState.player2.traits.map((t, i) => `<span title="${t.description}">${traitCategories[i]}: ${t.name}</span>`).join(', ') || 'None');
             player1HandElement.innerHTML = '';
             gameState.player1.hand.forEach((card, index) => {
                 const cardElement = createCardElement(card, index, true);
