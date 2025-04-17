@@ -1,0 +1,977 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Academia Arena - Prototype</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* 自訂樣式 */
+        body { font-family: 'Inter', sans-serif; }
+        /* 畫面容器 */
+        .screen { display: none; /* 預設隱藏 */ min-height: 80vh; /* 確保畫面有基本高度 */ }
+        #title-screen { display: flex; flex-direction: column; justify-content: center; align-items: center; } /* 初始顯示標題畫面 */
+        #trait-selection-screen { display: none; flex-direction: column; justify-content: center; align-items: center; padding: 2rem; }
+        #game-screen { display: none; } /* 遊戲主畫面預設隱藏 */
+
+        /* 特質選擇動畫樣式 */
+        .trait-slot-container {
+            border: 2px solid #cbd5e1;
+            padding: 1rem 1.5rem;
+            margin: 0.5rem;
+            border-radius: 8px;
+            background-color: #f8fafc;
+            min-width: 250px;
+            text-align: center;
+        }
+        .trait-slot {
+            font-size: 1.1rem;
+            font-weight: 500;
+            color: #475569;
+            min-height: 3em; /* 確保有足夠高度顯示滾動效果 */
+            overflow: hidden; /* 隱藏滾動時溢出的文字 */
+            border: 1px dashed #e2e8f0;
+            background-color: white;
+            padding: 0.5rem;
+            margin-top: 0.5rem;
+            border-radius: 4px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .trait-slot.final {
+            border-style: solid;
+            border-color: #60a5fa;
+            color: #1e40af;
+            font-weight: bold;
+        }
+
+        /* 其他樣式繼承之前的版本，並做微調 */
+        .field-lane { min-height: 160px; transition: background-color 0.3s ease, border-color 0.3s ease; display: flex; flex-direction: column; align-items: center; padding-top: 0.5rem; padding-bottom: 0.5rem; }
+        .field-lane h4 { margin-bottom: 0.5rem; flex-shrink: 0; }
+        .card-container { display: flex; flex-wrap: wrap; justify-content: center; gap: 5px; width: 100%; flex-grow: 1; }
+        .card { border: 1px solid #ccc; padding: 8px; margin: 3px; border-radius: 8px; background-color: white; cursor: pointer; transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out, border-color 0.2s ease-in-out; min-width: 110px; max-width: 110px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); display: flex; flex-direction: column; justify-content: space-between; height: 130px; overflow: hidden; }
+        .card:hover { transform: translateY(-3px) scale(1.03); box-shadow: 0 4px 8px rgba(0,0,0,0.15); }
+        .card.selected { border-color: #2563eb; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.5); transform: translateY(-2px) scale(1.02); }
+        .card.disabled { opacity: 0.7; cursor: not-allowed; }
+        .card-placeholder { border: 2px dashed #cbd5e1; color: #94a3b8; display: flex; align-items: center; justify-content: center; min-height: 80px; font-size: 0.8rem; text-align: center; padding: 5px; width: 100px; height: 100px; }
+        .field-lane.droppable { background-color: #dbeafe; border: 2px dashed #60a5fa; }
+        .game-message { min-height: 50px; background-color: #e5e7eb; border-radius: 8px; padding: 12px; margin-top: 10px; margin-bottom: 15px; text-align: center; font-weight: 500; font-size: 1.1rem; color: #1f2937; transition: background-color 0.3s ease; }
+        .game-message.player-turn { background-color: #dbeafe; color: #1e40af; }
+        .game-message.opponent-turn { background-color: #fee2e2; color: #991b1b; }
+        .game-message.action-required { background-color: #fef3c7; color: #92400e; }
+        .score-display { font-size: 1.5rem; font-weight: bold; }
+        .trait-display { background-color: #f0f9ff; border: 1px solid #e0f2fe; padding: 8px; border-radius: 6px; font-size: 0.85rem; margin-top: 5px; line-height: 1.4; }
+        .trait-display span { cursor: help; }
+        .card-name { font-weight: bold; margin-bottom: 4px; font-size: 0.8rem; line-height: 1.1; }
+        .card-type { font-style: italic; color: #6b7280; margin-bottom: 5px; font-size: 0.7rem; }
+        .card-credits { font-size: 0.75rem; margin-bottom: 4px; line-height: 1; }
+        .card-desc { font-size: 0.7rem; color: #4b5563; margin-bottom: 4px; line-height: 1.2; }
+        .card-effect { font-size: 0.7rem; color: #1d4ed8; font-weight: 500; margin-top: 3px; line-height: 1.2;}
+        .card-effect.stay { color: #059669; }
+        .action-button { font-weight: bold; padding: 10px 24px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); transition: background-color 0.2s ease-in-out, opacity 0.2s ease-in-out, transform 0.1s ease; cursor: pointer; }
+        .action-button:hover:not(:disabled) { transform: translateY(-1px); }
+        .action-button:active:not(:disabled) { transform: translateY(0px); }
+        .action-button:disabled { opacity: 0.5; cursor: not-allowed; }
+        #start-button, #continue-button { background-color: #1d4ed8; color: white; }
+        #start-button:hover, #continue-button:hover:not(:disabled) { background-color: #1e3a8a; }
+        #pass-button { background-color: #f59e0b; color: white; }
+        #pass-button:hover:not(:disabled) { background-color: #d97706; }
+        #trait-skill-button { background-color: #8b5cf6; color: white; }
+        #trait-skill-button:hover:not(:disabled) { background-color: #7c3aed; }
+        #cancel-action-button { background-color: #6b7280; color: white; }
+        #cancel-action-button:hover:not(:disabled) { background-color: #4b5563; }
+        .player-area, .opponent-area { margin-bottom: 1.5rem; }
+        .player-hand-area { margin-top: 1rem; }
+        .player-actions { margin-top: 1rem; text-align: center; }
+        .deck-discard-info { margin-top: 1.5rem; }
+    </style>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+</head>
+<body class="bg-gray-100 p-4">
+
+    <div id="title-screen" class="screen container mx-auto max-w-2xl text-center">
+        <h1 class="text-5xl font-bold text-blue-800 mb-6">Academia Arena</h1>
+        <p class="text-xl text-gray-600 mb-10">The University Duel Simulator</p>
+        <button id="start-button" class="action-button text-lg px-8 py-3">Start Game</button>
+    </div>
+
+    <div id="trait-selection-screen" class="screen container mx-auto max-w-4xl text-center">
+        <h2 class="text-3xl font-bold text-gray-800 mb-6">Assigning Traits...</h2>
+        <p class="text-gray-600 mb-8">Like in real life, you don't get to choose...</p>
+        <div class="flex flex-col md:flex-row justify-around w-full mb-8">
+            <div class="mb-6 md:mb-0">
+                <h3 class="text-xl font-semibold text-blue-700 mb-3">Your Traits</h3>
+                <div id="player1-trait-selection" class="flex flex-col items-center">
+                    <div class="trait-slot-container">Background: <div id="player1-trait-bg" class="trait-slot">???</div></div>
+                    <div class="trait-slot-container">Physiological: <div id="player1-trait-phys" class="trait-slot">???</div></div>
+                    <div class="trait-slot-container">Psychological: <div id="player1-trait-psy" class="trait-slot">???</div></div>
+                </div>
+            </div>
+            <div>
+                <h3 class="text-xl font-semibold text-red-700 mb-3">Opponent's Traits</h3>
+                 <div id="player2-trait-selection" class="flex flex-col items-center">
+                    <div class="trait-slot-container">Background: <div id="player2-trait-bg" class="trait-slot">???</div></div>
+                    <div class="trait-slot-container">Physiological: <div id="player2-trait-phys" class="trait-slot">???</div></div>
+                    <div class="trait-slot-container">Psychological: <div id="player2-trait-psy" class="trait-slot">???</div></div>
+                </div>
+            </div>
+        </div>
+        <button id="continue-button" class="action-button text-lg px-8 py-3" disabled>Continue</button>
+    </div>
+
+    <div id="game-screen" class="screen container mx-auto max-w-7xl bg-white p-6 rounded-lg shadow-xl">
+        <div id="game-message" class="game-message text-gray-700">Initializing Game...</div>
+
+        <div class="flex justify-around my-4 p-4 bg-gray-200 rounded-lg">
+             <div class="text-center">
+                <h3 class="text-lg font-semibold text-blue-700">Player 1 Score</h3>
+                <div id="player1-total-score" class="score-display text-blue-600">0</div>
+                <div class="text-sm text-gray-600">(Semesters Won: <span id="player1-rounds-won">0</span>)</div>
+                <div id="player1-traits" class="trait-display text-blue-800">Traits: Loading...</div>
+            </div>
+            <div class="text-center">
+                <h3 class="text-lg font-semibold text-red-700">Opponent Score</h3>
+                <div id="player2-total-score" class="score-display text-red-600">0</div>
+                <div class="text-sm text-gray-600">(Semesters Won: <span id="player2-rounds-won">0</span>)</div>
+                <div id="player2-traits" class="trait-display text-red-800">Traits: Loading...</div>
+            </div>
+        </div>
+
+        <div class="opponent-area mb-6">
+            <h2 class="text-xl font-semibold mb-2 text-red-700 text-center">Opponent's Field</h2>
+            <div class="grid grid-cols-3 gap-4">
+                <div id="player2-field-Presentations" data-player="2" data-field="Presentations" class="field-lane bg-red-50 p-3 rounded border border-red-200">
+                    <h4 class="font-medium text-center text-red-600">Presentations (<span id="player2-score-Presentations">0</span>)</h4>
+                    <div class="card-container"></div>
+                </div>
+                <div id="player2-field-Assignments" data-player="2" data-field="Assignments" class="field-lane bg-red-50 p-3 rounded border border-red-200">
+                    <h4 class="font-medium text-center text-red-600">Assignments (<span id="player2-score-Assignments">0</span>)</h4>
+                    <div class="card-container"></div>
+                </div>
+                <div id="player2-field-Exams" data-player="2" data-field="Exams" class="field-lane bg-red-50 p-3 rounded border border-red-200">
+                    <h4 class="font-medium text-center text-red-600">Exams (<span id="player2-score-Exams">0</span>)</h4>
+                    <div class="card-container"></div>
+                </div>
+            </div>
+            <div class="mt-4 text-center">
+                <h3 class="text-md font-semibold text-red-700">Opponent's Hand: <span id="player2-hand-count">0</span> cards</h3>
+                <div id="player2-hand" class="flex flex-wrap justify-center bg-red-100 p-2 rounded border border-red-200 min-h-[50px]">
+                     <div class="text-sm text-gray-500 italic">Opponent's cards are hidden</div>
+                </div>
+            </div>
+        </div>
+
+        <hr class="my-6 border-t-2 border-gray-300">
+
+        <div class="player-area mb-6">
+             <h2 class="text-xl font-semibold mb-2 text-blue-700 text-center">Your Field</h2>
+            <div class="grid grid-cols-3 gap-4">
+                <div id="player1-field-Presentations" data-player="1" data-field="Presentations" class="field-lane bg-blue-50 p-3 rounded border border-blue-200 droppable-area">
+                    <h4 class="font-medium text-center text-blue-600">Presentations (<span id="player1-score-Presentations">0</span>)</h4>
+                    <div class="card-container"></div>
+                </div>
+                <div id="player1-field-Assignments" data-player="1" data-field="Assignments" class="field-lane bg-blue-50 p-3 rounded border border-blue-200 droppable-area">
+                    <h4 class="font-medium text-center text-blue-600">Assignments (<span id="player1-score-Assignments">0</span>)</h4>
+                    <div class="card-container"></div>
+                </div>
+                <div id="player1-field-Exams" data-player="1" data-field="Exams" class="field-lane bg-blue-50 p-3 rounded border border-blue-200 droppable-area">
+                    <h4 class="font-medium text-center text-blue-600">Exams (<span id="player1-score-Exams">0</span>)</h4>
+                    <div class="card-container"></div>
+                </div>
+            </div>
+
+            <div class="player-hand-area mt-4">
+                <h3 class="text-lg font-semibold text-blue-700 text-center">Your Hand (<span id="player1-hand-count">0</span>)</h3>
+                <div id="player1-hand" class="flex flex-wrap justify-center bg-blue-100 p-3 rounded border border-blue-200 min-h-[150px]">
+                </div>
+            </div>
+
+            <div class="player-actions mt-4 text-center">
+                 <button id="pass-button" class="action-button">Pass Turn</button>
+                 <button id="trait-skill-button" class="action-button ml-4" disabled title="Trait skills not yet implemented">Use Trait Skill</button>
+                 <button id="cancel-action-button" class="action-button bg-gray-600 hover:bg-gray-700 text-white ml-4" style="display: none;">Cancel</button>
+            </div>
+        </div>
+
+         <div class="deck-discard-info flex justify-around text-sm text-gray-500 mt-6">
+            <div>Your Deck: <span id="player1-deck-count">0</span></div>
+            <div>Your Discard: <span id="player1-discard-count">0</span></div>
+            <div>Opponent's Deck: <span id="player2-deck-count">0</span></div>
+            <div>Opponent's Discard: <span id="player2-discard-count">0</span></div>
+        </div>
+    </div>
+
+    <script>
+        // --- 遊戲資料結構 ---
+        const cardLibrary = [ /* 卡牌定義保持不變 */
+            { id: 'nerd1', name: 'Anime Nerd', type: 'Character', credits: { Presentations: 2, Assignments: 5, Exams: 5 }, description: '5k followers on Github, 5 on LinkedIn.', deployEffect: null, synergy: null },
+            { id: 'gymbro1', name: 'Gym Bro', type: 'Character', credits: { Presentations: 6, Assignments: 3, Exams: 2 }, description: '"You hitting chest today?"', deployEffect: null, synergy: null },
+            { id: 'richkid1', name: 'Rich Int\'l Kid', type: 'Character', credits: { Presentations: 4, Assignments: 4, Exams: 1 }, description: '"Can I pay to pass this course?"', deployEffect: null, synergy: { type: 'Essay Ghostwriting', partnerId: 'richkid1' } },
+            { id: 'prof1', name: 'Procrastinating Prof', type: 'Character', credits: { Presentations: 3, Assignments: 6, Exams: 6 }, description: '"Grades will be out next week, definitely."', deployEffect: null, synergy: null },
+            { id: 'studious1', name: 'Overachiever', type: 'Character', credits: { Presentations: 4, Assignments: 7, Exams: 7 }, description: '"The library is my second home."', deployEffect: 'drawCard', effectValue: 1, synergy: null },
+            { id: 'event_conflict', name: 'Group Work Conflict', type: 'Event', credits: { Presentations: 0, Assignments: 0, Exams: 0 }, description: 'Choose an opponent\'s field, randomly remove a card with Synergy.', deployEffect: 'removeSynergyCard', effectValue: null, synergy: null },
+            { id: 'event_allnighter', name: 'All-Nighter', type: 'Event', credits: { Presentations: 0, Assignments: 0, Exams: 0 }, description: 'Choose one of your fields, all cards gain +1 credit.', deployEffect: 'boostField', effectValue: 1, synergy: null },
+            { id: 'dropout1', name: 'Dropout Entrepreneur', type: 'Character', credits: { Presentations: 8, Assignments: 1, Exams: 1 }, description: '"Degrees are overrated!"', deployEffect: null, synergy: null, stayOnField: true },
+        ];
+        const traitLibrary = { /* 特質定義保持不變 */
+             physiological: [
+                { id: 'trait_gym', name: 'Gym Buff', description: '+1 Credit in Presentations (Passive)' , passiveField: 'Presentations', passiveValue: 1 },
+                { id: 'trait_skinny', name: 'Skinny Nerd', description: '+1 Credit in Exams (Passive)', passiveField: 'Exams', passiveValue: 1 },
+                 { id: 'trait_impaired', name: 'Physically Impaired', description: 'Opponent plays first.', passiveEffect: 'opponentStarts' },
+            ],
+            psychological: [
+                { id: 'trait_adhd', name: 'ADHD', description: 'Discard 1 card, draw 2 (Active, 1/round)', activeAbility: 'adhdDraw', limitPerRound: 1 },
+                { id: 'trait_calm', name: 'Calm Mind', description: 'Negate opponent Event card effect (Passive, 50% chance)', passiveEffect: 'negateEvent', chance: 0.5 },
+                 { id: 'trait_depressed', name: 'Depression', description: 'All your cards have -1 credit in Presentations.', passiveField: 'Presentations', passiveValue: -1 },
+            ],
+            background: [
+                { id: 'trait_intl', name: 'International', description: '+1 Credit in Assignments (Passive)', passiveField: 'Assignments', passiveValue: 1 },
+                { id: 'trait_local', name: 'Domestic', description: 'Draw 1 card at turn start (Passive)', passiveEffect: 'drawOnTurnStart' },
+                 { id: 'trait_minority', name: 'Minority', description: '+2 total score at end of round if losing.', passiveEffect: 'comebackBonus', value: 2 },
+            ]
+        };
+        const GamePhase = { /* 階段定義保持不變 */
+            TITLE_SCREEN: 'TITLE_SCREEN',
+            TRAIT_SELECTION: 'TRAIT_SELECTION',
+            AWAITING_PLAYER_ACTION: 'AWAITING_PLAYER_ACTION',
+            CARD_SELECTED: 'CARD_SELECTED',
+            PROCESSING_PLAYER_ACTION: 'PROCESSING_PLAYER_ACTION',
+            AWAITING_AI_ACTION: 'AWAITING_AI_ACTION',
+            PROCESSING_AI_ACTION: 'PROCESSING_AI_ACTION',
+            ROUND_OVER: 'ROUND_OVER',
+            GAME_OVER: 'GAME_OVER'
+        };
+        let gameState = { /* 遊戲狀態保持不變 */
+            currentPhase: GamePhase.TITLE_SCREEN, // 初始階段為標題畫面
+            currentPlayer: 1,
+            round: 1,
+            player1: { deck: [], hand: [], field: { Presentations: [], Assignments: [], Exams: [] }, discard: [], score: { Presentations: 0, Assignments: 0, Exams: 0, total: 0 }, roundsWon: 0, passed: false, traits: [], traitUses: {} },
+            player2: { deck: [], hand: [], field: { Presentations: [], Assignments: [], Exams: [] }, discard: [], score: { Presentations: 0, Assignments: 0, Exams: 0, total: 0 }, roundsWon: 0, passed: false, traits: [], traitUses: {} },
+            selectedCardIndex: null,
+            selectedCardData: null,
+            message: ""
+        };
+
+        // --- DOM 元素引用 ---
+        const titleScreen = document.getElementById('title-screen');
+        const traitSelectionScreen = document.getElementById('trait-selection-screen');
+        const gameScreen = document.getElementById('game-screen');
+        const startButton = document.getElementById('start-button');
+        const continueButton = document.getElementById('continue-button');
+        // 遊戲主畫面元素引用 (保持不變)
+        const player1HandElement = document.getElementById('player1-hand');
+        const player2HandElement = document.getElementById('player2-hand');
+        const player1Fields = { Presentations: document.getElementById('player1-field-Presentations'), Assignments: document.getElementById('player1-field-Assignments'), Exams: document.getElementById('player1-field-Exams') };
+        const player2Fields = { Presentations: document.getElementById('player2-field-Presentations'), Assignments: document.getElementById('player2-field-Assignments'), Exams: document.getElementById('player2-field-Exams') };
+        const gameMessageElement = document.getElementById('game-message');
+        const passButton = document.getElementById('pass-button');
+        const traitSkillButton = document.getElementById('trait-skill-button');
+        const cancelActionButton = document.getElementById('cancel-action-button');
+        // 特質選擇畫面元素
+        const player1TraitSlots = { bg: document.getElementById('player1-trait-bg'), phys: document.getElementById('player1-trait-phys'), psy: document.getElementById('player1-trait-psy') };
+        const player2TraitSlots = { bg: document.getElementById('player2-trait-bg'), phys: document.getElementById('player2-trait-phys'), psy: document.getElementById('player2-trait-psy') };
+
+        // --- 畫面管理 ---
+        function showScreen(screenId) {
+            document.querySelectorAll('.screen').forEach(screen => {
+                screen.style.display = 'none';
+            });
+            const screenToShow = document.getElementById(screenId);
+            if (screenToShow) {
+                 // 使用 flex 或 block 取決於畫面設計，此處用 flex 配合樣式
+                screenToShow.style.display = 'flex';
+                 // 如果是遊戲主畫面，則使用 block (因為內部是 grid 等佈局)
+                 if (screenId === 'game-screen') {
+                     screenToShow.style.display = 'block';
+                 }
+            }
+        }
+
+        // --- 核心遊戲邏輯 (調整後) ---
+
+        // 開始特質選擇流程
+        function startTraitSelection() {
+            gameState.currentPhase = GamePhase.TRAIT_SELECTION;
+            showScreen('trait-selection-screen');
+            continueButton.disabled = true; // 開始選擇時禁用繼續按鈕
+
+            // 為雙方分配特質 (儲存到 gameState)
+            gameState.player1.traits = assignRandomTraits();
+            gameState.player2.traits = assignRandomTraits();
+            gameState.player1.traitUses = {}; // 重置技能使用
+            gameState.player2.traitUses = {};
+
+            // 模擬老虎機效果顯示特質
+            animateTraitSelection(player1TraitSlots, gameState.player1.traits, () => {
+                animateTraitSelection(player2TraitSlots, gameState.player2.traits, () => {
+                    // 雙方動畫都結束後，啟用繼續按鈕
+                    continueButton.disabled = false;
+                     setMessage("Traits assigned. Press Continue to start the game."); // 更新提示訊息
+                });
+            });
+        }
+
+        // 模擬特質選擇動畫
+        function animateTraitSelection(slots, assignedTraits, callback) {
+            const categories = ['bg', 'phys', 'psy'];
+            let animationsCompleted = 0;
+
+            categories.forEach((cat, index) => {
+                const slotElement = slots[cat];
+                const finalTrait = assignedTraits[index] || { name: 'None', description: '' }; // 處理可能未分配的情況
+                const traitPool = traitLibrary[Object.keys(traitLibrary)[index]]; // 獲取對應類別的特質池
+                let intervalCount = 0;
+                const maxIntervals = 15 + Math.floor(Math.random() * 10); // 隨機滾動次數
+
+                slotElement.classList.remove('final');
+                const intervalId = setInterval(() => {
+                    intervalCount++;
+                    // 隨機顯示一個特質名稱
+                    const randomTrait = traitPool[Math.floor(Math.random() * traitPool.length)];
+                    slotElement.textContent = randomTrait.name;
+
+                    if (intervalCount >= maxIntervals) {
+                        clearInterval(intervalId);
+                        slotElement.textContent = finalTrait.name;
+                        slotElement.title = finalTrait.description; // 添加懸停提示
+                        slotElement.classList.add('final');
+                        animationsCompleted++;
+                        if (animationsCompleted === categories.length) {
+                            callback(); // 所有動畫完成後執行回調
+                        }
+                    }
+                }, 70); // 滾動速度
+            });
+        }
+
+
+        // 初始化遊戲主介面和狀態 (取代部分 setupGame 功能)
+        function initializeGameInterface() {
+            gameState.round = 1;
+            gameState.player1.roundsWon = 0;
+            gameState.player2.roundsWon = 0;
+
+            // 1. 建立雙方牌庫
+            gameState.player1.deck = shuffleDeck([...cardLibrary]);
+            gameState.player2.deck = shuffleDeck([...cardLibrary]);
+            gameState.player1.hand = []; // 清空手牌以重新抽牌
+            gameState.player2.hand = [];
+            gameState.player1.discard = [];
+            gameState.player2.discard = [];
+            gameState.player1.field = { Presentations: [], Assignments: [], Exams: [] };
+            gameState.player2.field = { Presentations: [], Assignments: [], Exams: [] };
+
+             // 2. 初始抽牌 (例如 5 張)
+            for (let i = 0; i < 5; i++) {
+                drawCard(1);
+                drawCard(2);
+            }
+
+             // 3. 重置回合狀態
+             resetRoundState(); // 包含 passed 狀態
+
+             // 4. 決定先手玩家 (可以基於特質)
+             let player1Starts = true;
+             // 檢查是否有 'opponentStarts' 特質
+             if (gameState.player1.traits.some(t => t.passiveEffect === 'opponentStarts')) player1Starts = false;
+             if (gameState.player2.traits.some(t => t.passiveEffect === 'opponentStarts')) player1Starts = true; // 如果雙方都有，後判斷的覆蓋前者？或隨機？此處P2優先
+             gameState.currentPlayer = player1Starts ? 1 : 2;
+
+
+             // 5. 顯示遊戲主畫面
+             showScreen('game-screen');
+
+             // 6. 設定初始遊戲階段和訊息
+             setMessage(`Starting Semester ${gameState.round}. ${gameState.currentPlayer === 1 ? 'Your' : 'Opponent\'s'} Turn.`);
+             handleTurnStartTraits(gameState.currentPlayer); // 處理先手玩家的回合開始效果
+
+             if (gameState.currentPlayer === 1) {
+                 setGamePhase(GamePhase.AWAITING_PLAYER_ACTION);
+             } else {
+                 setGamePhase(GamePhase.AWAITING_AI_ACTION);
+                 setTimeout(aiTurn, 800); // AI 先手
+             }
+
+             // 7. 更新 UI
+             updateUI();
+        }
+
+
+        // 洗牌 (不變)
+        function shuffleDeck(deck) { /* ... */
+             for (let i = deck.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [deck[i], deck[j]] = [deck[j], deck[i]];
+            }
+            return deck;
+        }
+        // 分配隨機特質 (不變)
+        function assignRandomTraits() { /* ... */
+            const traits = [];
+            const categories = Object.keys(traitLibrary);
+            let assignedCount = 0;
+            while(assignedCount < 3) { //確保分配三個特質
+                const categoryIndex = assignedCount % categories.length;
+                const category = categories[categoryIndex];
+                const availableTraits = traitLibrary[category];
+                if (availableTraits.length > 0) {
+                    const randomIndex = Math.floor(Math.random() * availableTraits.length);
+                    // 確保不重複分配同一類別 (雖然目前邏輯是按順序分配)
+                    if (!traits.some(t => traitLibrary[category].includes(t))) {
+                         traits.push(availableTraits[randomIndex]);
+                    }
+                }
+                 assignedCount++; // 即使沒分配成功也要增加計數避免死循環
+            }
+             // 打亂順序，使得最終顯示位置不固定對應類別
+             return shuffleDeck(traits);
+            // return traits;
+        }
+        // 抽牌 (不變)
+        function drawCard(player) { /* ... */
+             const playerState = player === 1 ? gameState.player1 : gameState.player2;
+            if (playerState.deck.length > 0) {
+                const card = playerState.deck.pop();
+                 card.instanceId = generateUniqueId();
+                playerState.hand.push(card);
+            } else {
+                 if (player === 1) setMessage(`Your deck is empty!`);
+            }
+             if (player === 1) {
+                 updateUICounters();
+             }
+        }
+
+        // 設定遊戲階段並更新UI提示 (邏輯不變)
+        function setGamePhase(newPhase) { /* ... */
+            gameState.currentPhase = newPhase;
+            console.log("Phase changed to:", newPhase);
+
+            switch (newPhase) {
+                 case GamePhase.TITLE_SCREEN: // 新增處理
+                     showScreen('title-screen');
+                     break;
+                 case GamePhase.TRAIT_SELECTION: // 新增處理
+                     showScreen('trait-selection-screen');
+                     break;
+                 case GamePhase.AWAITING_PLAYER_ACTION:
+                    setMessage("Your Turn. Select a card or Pass.", "player-turn");
+                    passButton.disabled = gameState.player1.passed; // Pass 狀態應在回合重置時處理
+                    cancelActionButton.style.display = 'none';
+                    highlightDroppableFields(false);
+                    break;
+                case GamePhase.CARD_SELECTED:
+                    setMessage("Card selected. Choose a field to play it on.", "action-required");
+                    passButton.disabled = true;
+                    cancelActionButton.style.display = 'inline-block';
+                    highlightDroppableFields(true);
+                    break;
+                case GamePhase.PROCESSING_PLAYER_ACTION:
+                    setMessage("Processing your action...", "player-turn");
+                    passButton.disabled = true;
+                    cancelActionButton.style.display = 'none';
+                    highlightDroppableFields(false);
+                    break;
+                case GamePhase.AWAITING_AI_ACTION:
+                    setMessage("Opponent's Turn...", "opponent-turn");
+                    passButton.disabled = true;
+                    cancelActionButton.style.display = 'none';
+                    highlightDroppableFields(false);
+                    break;
+                case GamePhase.PROCESSING_AI_ACTION:
+                     setMessage("Opponent is playing...", "opponent-turn");
+                    break;
+                case GamePhase.ROUND_OVER:
+                    passButton.disabled = true;
+                    cancelActionButton.style.display = 'none';
+                    break;
+                case GamePhase.GAME_OVER:
+                    passButton.disabled = true;
+                    traitSkillButton.disabled = true;
+                    cancelActionButton.style.display = 'none';
+                    break;
+            }
+             // 只有在遊戲主畫面才更新遊戲 UI
+             if (newPhase !== GamePhase.TITLE_SCREEN && newPhase !== GamePhase.TRAIT_SELECTION) {
+                 updateUI();
+             }
+        }
+
+        // 選擇/取消選擇手牌 (邏輯不變)
+        function selectCard(cardIndex) { /* ... */
+             if (gameState.currentPhase !== GamePhase.AWAITING_PLAYER_ACTION) return;
+            const playerState = gameState.player1;
+            if (cardIndex < 0 || cardIndex >= playerState.hand.length) return;
+            const previouslySelectedElement = player1HandElement.querySelector('.selected');
+            if (previouslySelectedElement) {
+                previouslySelectedElement.classList.remove('selected');
+            }
+            gameState.selectedCardIndex = cardIndex;
+            gameState.selectedCardData = { ...playerState.hand[cardIndex] };
+            const cardElement = player1HandElement.children[cardIndex];
+            if (cardElement) {
+                cardElement.classList.add('selected');
+            }
+            setGamePhase(GamePhase.CARD_SELECTED);
+        }
+        // 取消選擇卡牌或操作 (邏輯不變)
+        function cancelAction() { /* ... */
+             if (gameState.currentPhase === GamePhase.CARD_SELECTED) {
+                 const previouslySelectedElement = player1HandElement.querySelector('.selected');
+                 if (previouslySelectedElement) {
+                     previouslySelectedElement.classList.remove('selected');
+                 }
+                 gameState.selectedCardIndex = null;
+                 gameState.selectedCardData = null;
+                 setGamePhase(GamePhase.AWAITING_PLAYER_ACTION);
+             }
+        }
+        // 高亮/取消高亮可放置欄位 (邏輯不變)
+        function highlightDroppableFields(highlight) { /* ... */
+             Object.values(player1Fields).forEach(fieldElement => {
+                if (highlight) {
+                    fieldElement.classList.add('droppable');
+                } else {
+                    fieldElement.classList.remove('droppable');
+                }
+            });
+        }
+        // 放置卡牌到欄位 (邏輯不變)
+        function playCardToField(fieldElement) { /* ... */
+             if (gameState.currentPhase !== GamePhase.CARD_SELECTED) return;
+            const fieldName = fieldElement.dataset.field;
+            if (!fieldName || !gameState.selectedCardData) return;
+            setGamePhase(GamePhase.PROCESSING_PLAYER_ACTION);
+            const playerState = gameState.player1;
+            const cardToPlay = gameState.selectedCardData;
+            const originalIndex = gameState.selectedCardIndex;
+             if (originalIndex !== null && originalIndex < playerState.hand.length) {
+                 playerState.hand.splice(originalIndex, 1);
+             } else {
+                 console.error("Error removing card from hand, index invalid:", originalIndex);
+                 setGamePhase(GamePhase.AWAITING_PLAYER_ACTION);
+                 return;
+             }
+            gameState.selectedCardIndex = null;
+            gameState.selectedCardData = null;
+            playerState.field[fieldName].push(cardToPlay);
+            setMessage(`You played ${cardToPlay.name} to ${fieldName}.`);
+            handleDeployEffect(1, cardToPlay, fieldName);
+            checkSynergy(1, fieldName);
+            calculateScores();
+            updateUI();
+            setTimeout(() => {
+                 if (cardToPlay.type === 'Event') {
+                     const cardIndexInField = playerState.field[fieldName].findIndex(c => c.instanceId === cardToPlay.instanceId);
+                     if (cardIndexInField > -1) {
+                         const eventCard = playerState.field[fieldName].splice(cardIndexInField, 1)[0];
+                         playerState.discard.push(eventCard);
+                         calculateScores();
+                         updateUI();
+                     }
+                 }
+                 if (gameState.currentPhase !== GamePhase.GAME_OVER) {
+                    setGamePhase(GamePhase.AWAITING_AI_ACTION);
+                    setTimeout(aiTurn, 800);
+                 }
+            }, 500);
+        }
+        // 處理部署效果 (邏輯不變)
+        function handleDeployEffect(player, card, fieldName) { /* ... */
+              if (!card.deployEffect) return;
+             const playerName = player === 1 ? "Player 1" : "Opponent";
+             const targetPlayerState = player === 1 ? gameState.player1 : gameState.player2;
+             const opponentPlayerState = player === 1 ? gameState.player2 : gameState.player1;
+             switch (card.deployEffect) {
+                case 'drawCard':
+                    for (let i = 0; i < (card.effectValue || 1); i++) { drawCard(player); }
+                    setTimeout(() => setMessage(`${playerName} used ${card.name} effect, drew ${card.effectValue || 1} card(s)!`), 100);
+                    break;
+                case 'boostField':
+                     calculateScores();
+                     setTimeout(() => setMessage(`${playerName} used ${card.name} effect, boosting ${fieldName}!`), 100);
+                    break;
+                case 'removeSynergyCard':
+                     let targetField = null;
+                     const opponentFields = Object.keys(opponentPlayerState.field);
+                     const nonEmptyFields = opponentFields.filter(f => opponentPlayerState.field[f].length > 0);
+                     if (nonEmptyFields.length > 0) {
+                         const randomFieldName = nonEmptyFields[Math.floor(Math.random() * nonEmptyFields.length)];
+                         const fieldCards = opponentPlayerState.field[randomFieldName];
+                         const synergyCards = fieldCards.filter(c => c.synergy);
+                         if (synergyCards.length > 0) {
+                             const cardToRemove = synergyCards[Math.floor(Math.random() * synergyCards.length)];
+                             const indexToRemove = fieldCards.indexOf(cardToRemove);
+                             if (indexToRemove > -1) {
+                                 const removed = fieldCards.splice(indexToRemove, 1)[0];
+                                 opponentPlayerState.discard.push(removed);
+                                 setTimeout(() => setMessage(`${playerName} used ${card.name} effect, removing a card from Opponent's ${randomFieldName}!`), 100);
+                                 calculateScores();
+                             }
+                         } else {
+                              setTimeout(() => setMessage(`Opponent has no Synergy cards in ${randomFieldName} to remove.`), 100);
+                         }
+                     } else {
+                          setTimeout(() => setMessage(`Opponent has no cards on the field to remove.`), 100);
+                     }
+                    break;
+            }
+        }
+        // 檢查協同效應 (邏輯不變)
+        function checkSynergy(player, fieldName) { /* ... */
+             const playerState = player === 1 ? gameState.player1 : gameState.player2;
+             const field = playerState.field[fieldName];
+             if (field.length < 2) return;
+             const playerName = player === 1 ? "Player 1" : "Opponent";
+             for (let i = 0; i < field.length - 1; i++) {
+                 const card1 = field[i];
+                 const card2 = field[i + 1];
+                 if (card1.synergy && card1.synergy.type === 'Essay Ghostwriting' &&
+                     card2.id === card1.synergy.partnerId && !card1.synergyActivated && !card2.synergyActivated) {
+                     card1.synergyActivated = true;
+                     card2.synergyActivated = true;
+                     setTimeout(() => setMessage(`${playerName} triggered ${card1.synergy.type} Synergy in ${fieldName}!`), 150);
+                     if (Math.random() < 0.5) {
+                          setTimeout(() => setMessage(`Ghostwriting success! Credits doubled! (Effect TBD)`), 200);
+                     } else {
+                         setTimeout(() => setMessage(`Caught cheating! Both cards expelled!`), 200);
+                         const removed1 = field.splice(i + 1, 1)[0];
+                         const removed2 = field.splice(i, 1)[0];
+                         playerState.discard.push(removed1, removed2);
+                         i--;
+                     }
+                     setTimeout(() => { calculateScores(); updateUI(); }, 250);
+                     break;
+                 }
+             }
+        }
+        // 計算所有分數 (邏輯不變)
+        function calculateScores() { /* ... */ calculatePlayerScore(1); calculatePlayerScore(2); }
+        // 計算單個玩家分數 (邏輯不變)
+        function calculatePlayerScore(player) { /* ... */
+             const playerState = player === 1 ? gameState.player1 : gameState.player2;
+            let totalScore = 0;
+            const fields = ['Presentations', 'Assignments', 'Exams'];
+            fields.forEach(field => {
+                let fieldScore = 0;
+                playerState.field[field].forEach(card => {
+                    if (card && card.credits) { fieldScore += card.credits[field] || 0; }
+                    else { console.warn("Card missing credits:", card); }
+                });
+                playerState.traits.forEach(trait => {
+                    if (trait.passiveField === field && trait.passiveValue) {
+                        // 處理負值加成
+                        if (trait.passiveValue < 0) {
+                            playerState.field[field].forEach(cardOnField => {
+                                // 確保卡牌存在且有基礎分數
+                                if (cardOnField && cardOnField.credits && (cardOnField.credits[field] || 0) > 0) {
+                                     fieldScore += trait.passiveValue;
+                                }
+                            });
+                        } else {
+                            // 正值加成
+                            let characterCount = playerState.field[field].filter(c => c && c.type === 'Character').length;
+                            fieldScore += (trait.passiveValue || 0) * characterCount;
+                        }
+                    }
+                });
+                // 確保分數不為負
+                playerState.score[field] = Math.max(0, fieldScore);
+                totalScore += playerState.score[field];
+            });
+             // 處理回合結束時的加成 (例如 Minority)
+             // 注意：這個邏輯應該在 endRound 計算最終分數時觸發，而不是每次計算都觸發
+             // 此處暫時移除，移到 endRound 內部
+            playerState.score.total = Math.max(0, totalScore);
+        }
+        // 處理回合開始時的特質效果 (邏輯不變)
+        function handleTurnStartTraits(player) { /* ... */
+             const playerState = player === 1 ? gameState.player1 : gameState.player2;
+            const playerName = player === 1 ? "Player 1" : "Opponent";
+            playerState.traits.forEach(trait => {
+                if (trait.passiveEffect === 'drawOnTurnStart') {
+                    drawCard(player);
+                     setTimeout(() => setMessage(`${playerName} (${trait.name}) drew a card at turn start.`), 50);
+                }
+            });
+        }
+        // 玩家按下 Pass 按鈕 (邏輯不變)
+        function playerPass() { /* ... */
+             if (gameState.currentPhase !== GamePhase.AWAITING_PLAYER_ACTION) return;
+            setGamePhase(GamePhase.PROCESSING_PLAYER_ACTION);
+            gameState.player1.passed = true;
+            setMessage("Player 1 passed the turn.");
+            setTimeout(() => {
+                if (gameState.player2.passed) { endRound(); }
+                else { setGamePhase(GamePhase.AWAITING_AI_ACTION); setTimeout(aiTurn, 800); }
+            }, 500);
+        }
+        // AI 回合邏輯 (邏輯不變)
+        function aiTurn() { /* ... */
+             if (gameState.currentPhase !== GamePhase.AWAITING_AI_ACTION || gameState.player2.passed) return;
+             setGamePhase(GamePhase.PROCESSING_AI_ACTION);
+            const playerState = gameState.player2;
+            const opponentState = gameState.player1;
+            let bestPlay = null; let shouldPlayCard = false;
+            if (playerState.hand.length > 0) {
+                playerState.hand.forEach((card, index) => {
+                     if (card.type === 'Character') {
+                        Object.keys(card.credits).forEach(fieldName => {
+                            const score = card.credits[fieldName] || 0;
+                            if (!bestPlay || score > bestPlay.score) { bestPlay = { cardIndex: index, fieldName: fieldName, score: score, card: card }; }
+                        });
+                    }
+                });
+                if (bestPlay && (playerState.score.total < opponentState.score.total || bestPlay.score >= 5)) { shouldPlayCard = true; }
+                if (playerState.score.total > opponentState.score.total + 10 && playerState.hand.length <= 3) { shouldPlayCard = false; }
+                if (Math.random() < 0.2 && playerState.hand.length > 0) shouldPlayCard = true;
+                if (Math.random() < 0.1 && shouldPlayCard) shouldPlayCard = false;
+            }
+             setTimeout(() => {
+                 if (shouldPlayCard && bestPlay) {
+                     const cardToPlay = playerState.hand.splice(bestPlay.cardIndex, 1)[0];
+                     playerState.field[bestPlay.fieldName].push(cardToPlay);
+                     setMessage(`Opponent played ${cardToPlay.name} to ${bestPlay.fieldName}.`);
+                     handleDeployEffect(2, cardToPlay, bestPlay.fieldName);
+                     checkSynergy(2, bestPlay.fieldName);
+                     calculateScores();
+                     updateUI();
+                     setTimeout(() => {
+                          if (cardToPlay.type === 'Event') {
+                             const cardIndexInField = playerState.field[bestPlay.fieldName].findIndex(c => c.instanceId === cardToPlay.instanceId);
+                             if (cardIndexInField > -1) {
+                                 const eventCard = playerState.field[bestPlay.fieldName].splice(cardIndexInField, 1)[0];
+                                 playerState.discard.push(eventCard);
+                                 calculateScores(); updateUI();
+                             }
+                         }
+                         if (gameState.currentPhase !== GamePhase.GAME_OVER && gameState.currentPhase !== GamePhase.ROUND_OVER) {
+                            handleTurnStartTraits(1); setGamePhase(GamePhase.AWAITING_PLAYER_ACTION);
+                         }
+                     }, 600);
+                 } else {
+                     gameState.player2.passed = true; setMessage("Opponent passed the turn."); updateUI();
+                     if (gameState.player1.passed) { endRound(); }
+                     else { handleTurnStartTraits(1); setGamePhase(GamePhase.AWAITING_PLAYER_ACTION); }
+                 }
+             }, 1200 + Math.random() * 800);
+        }
+        // 結束回合 (加入回合結束特質處理)
+        function endRound() {
+            setGamePhase(GamePhase.ROUND_OVER);
+            calculateScores(); // 先計算基礎分數
+
+            // 處理回合結束時的特質效果 (例如 Minority)
+            let p1FinalScore = gameState.player1.score.total;
+            let p2FinalScore = gameState.player2.score.total;
+
+            gameState.player1.traits.forEach(trait => {
+                if (trait.passiveEffect === 'comebackBonus' && p1FinalScore < p2FinalScore) {
+                    p1FinalScore += trait.value || 0;
+                    setTimeout(() => setMessage(`Player 1 (${trait.name}) gets a comeback bonus!`), 300);
+                }
+            });
+             gameState.player2.traits.forEach(trait => {
+                if (trait.passiveEffect === 'comebackBonus' && p2FinalScore < p1FinalScore) {
+                    p2FinalScore += trait.value || 0;
+                     setTimeout(() => setMessage(`Opponent (${trait.name}) gets a comeback bonus!`), 300);
+                }
+            });
+             // 確保分數不為負
+             p1FinalScore = Math.max(0, p1FinalScore);
+             p2FinalScore = Math.max(0, p2FinalScore);
+
+            // 使用最終計算的分數判定勝負
+            let roundWinnerMessage = `Semester ${gameState.round} Over! `;
+            if (p1FinalScore > p2FinalScore) {
+                gameState.player1.roundsWon++;
+                roundWinnerMessage += ` Player 1 wins the semester (${p1FinalScore} vs ${p2FinalScore}).`;
+            } else if (p2FinalScore > p1FinalScore) {
+                gameState.player2.roundsWon++;
+                roundWinnerMessage += ` Opponent wins the semester (${p2FinalScore} vs ${p1FinalScore}).`;
+            } else {
+                gameState.player1.roundsWon++;
+                gameState.player2.roundsWon++;
+                roundWinnerMessage += ` It's a tie! Both players win the semester (${p1FinalScore} vs ${p2FinalScore}).`;
+            }
+
+            // 先顯示分數再顯示最終結果
+            gameState.player1.score.total = p1FinalScore; // 更新狀態以正確顯示
+            gameState.player2.score.total = p2FinalScore;
+            updateUICounters(); // 更新分數顯示
+            setTimeout(() => setMessage(roundWinnerMessage), 500); // 延遲顯示最終結果
+
+            if (gameState.player1.roundsWon >= 2 || gameState.player2.roundsWon >= 2) {
+                 setTimeout(endGame, 2000);
+                return;
+            }
+            setTimeout(() => { /* 準備下一回合邏輯不變 */
+                gameState.round++; clearBoard(); resetRoundState();
+                 if (p1FinalScore < p2FinalScore) { gameState.currentPlayer = 1; }
+                 else if (p2FinalScore < p1FinalScore) { gameState.currentPlayer = 2; }
+                setMessage(`Starting Semester ${gameState.round}. ${gameState.currentPlayer === 1 ? 'Your' : 'Opponent\'s'} Turn.`);
+                 handleTurnStartTraits(gameState.currentPlayer);
+                 if (gameState.currentPlayer === 1) { setGamePhase(GamePhase.AWAITING_PLAYER_ACTION); }
+                 else { setGamePhase(GamePhase.AWAITING_AI_ACTION); setTimeout(aiTurn, 800); }
+                 updateUI();
+            }, 3000);
+        }
+        // 清理場地 (邏輯不變)
+        function clearBoard() { /* ... */
+            const players = [gameState.player1, gameState.player2];
+            players.forEach(playerState => {
+                Object.keys(playerState.field).forEach(fieldName => {
+                    const remainingCards = [];
+                    playerState.field[fieldName].forEach(card => {
+                        if (card.stayOnField) { remainingCards.push(card); if (card.synergyActivated) card.synergyActivated = false; }
+                        else { playerState.discard.push(card); }
+                    });
+                    playerState.field[fieldName] = remainingCards;
+                });
+            });
+             calculateScores();
+        }
+        // 重置回合狀態 (邏輯不變)
+        function resetRoundState() { /* ... */
+             gameState.player1.passed = false; gameState.player2.passed = false;
+            gameState.selectedCardIndex = null; gameState.selectedCardData = null;
+            gameState.player1.traitUses = {}; gameState.player2.traitUses = {};
+            [gameState.player1, gameState.player2].forEach(p => {
+                Object.values(p.field).flat().forEach(c => { if(c && c.synergyActivated) c.synergyActivated = false; });
+                 p.hand.forEach(c => { if(c && c.synergyActivated) c.synergyActivated = false; }); // 清理手牌可能存在的標記
+            });
+        }
+        // 結束遊戲 (邏輯不變)
+        function endGame() { /* ... */
+            setGamePhase(GamePhase.GAME_OVER);
+            let winnerMessage = "Game Over! ";
+            if (gameState.player1.roundsWon >= 2 && gameState.player2.roundsWon < 2) { winnerMessage += " Congratulations! You won the Academic Year!"; }
+            else if (gameState.player2.roundsWon >= 2 && gameState.player1.roundsWon < 2) { winnerMessage += " The Opponent won the Academic Year!"; }
+            else { winnerMessage += " It's a draw!"; }
+            setMessage(winnerMessage);
+            passButton.disabled = true; traitSkillButton.disabled = true; cancelActionButton.style.display = 'none';
+        }
+        // 更新 UI 顯示 (邏輯不變)
+        function updateUI() { /* ... */
+             const isPlayerTurn = gameState.currentPlayer === 1;
+            const isAwaitingPlayerAction = gameState.currentPhase === GamePhase.AWAITING_PLAYER_ACTION;
+            const isCardSelected = gameState.currentPhase === GamePhase.CARD_SELECTED;
+            const isGameOver = gameState.currentPhase === GamePhase.GAME_OVER;
+            updateUICounters();
+            document.getElementById('player1-traits').innerHTML = 'Traits: ' + (gameState.player1.traits.map(t => `<span title="${t.description}">${t.name}</span>`).join(', ') || 'None');
+            document.getElementById('player2-traits').innerHTML = 'Traits: ' + (gameState.player2.traits.map(t => `<span title="${t.description}">${t.name}</span>`).join(', ') || 'None');
+            player1HandElement.innerHTML = '';
+            gameState.player1.hand.forEach((card, index) => {
+                const cardElement = createCardElement(card, index, true);
+                 if (!isAwaitingPlayerAction || isGameOver) { cardElement.classList.add('disabled'); cardElement.style.cursor = 'not-allowed'; }
+                 else { cardElement.classList.remove('disabled'); cardElement.style.cursor = 'pointer'; }
+                 if (index === gameState.selectedCardIndex) { cardElement.classList.add('selected'); }
+                player1HandElement.appendChild(cardElement);
+            });
+            player2HandElement.innerHTML = '';
+            if (gameState.player2.hand.length > 0) {
+                 const backCard = document.createElement('div');
+                 backCard.className = 'text-sm text-gray-500 italic';
+                 backCard.textContent = `Opponent has ${gameState.player2.hand.length} card(s)`;
+                 player2HandElement.appendChild(backCard);
+            } else { player2HandElement.innerHTML = '<div class="text-sm text-gray-500 italic">Opponent has no cards</div>'; }
+            ['Presentations', 'Assignments', 'Exams'].forEach(field => {
+                const p1FieldContainer = player1Fields[field].querySelector('.card-container');
+                const p2FieldContainer = player2Fields[field].querySelector('.card-container');
+                p1FieldContainer.innerHTML = ''; p2FieldContainer.innerHTML = '';
+                gameState.player1.field[field].forEach(card => { p1FieldContainer.appendChild(createCardElement(card, null, false)); });
+                 if (gameState.player1.field[field].length === 0) { p1FieldContainer.innerHTML = '<div class="card-placeholder">Empty</div>'; }
+                gameState.player2.field[field].forEach(card => { p2FieldContainer.appendChild(createCardElement(card, null, false)); });
+                 if (gameState.player2.field[field].length === 0) { p2FieldContainer.innerHTML = '<div class="card-placeholder">Empty</div>'; }
+                 if (isCardSelected) { player1Fields[field].classList.add('droppable'); player1Fields[field].classList.remove('not-droppable'); }
+                 else { player1Fields[field].classList.remove('droppable'); player1Fields[field].classList.add('not-droppable'); }
+            });
+             passButton.disabled = !isAwaitingPlayerAction || isGameOver || gameState.player1.passed; // 考慮 passed 狀態
+             traitSkillButton.disabled = true;
+             cancelActionButton.style.display = isCardSelected ? 'inline-block' : 'none';
+             gameMessageElement.className = 'game-message text-gray-700';
+             if (isPlayerTurn && (isAwaitingPlayerAction || gameState.currentPhase === GamePhase.PROCESSING_PLAYER_ACTION)) { gameMessageElement.classList.add('player-turn'); }
+             else if (!isPlayerTurn && (gameState.currentPhase === GamePhase.AWAITING_AI_ACTION || gameState.currentPhase === GamePhase.PROCESSING_AI_ACTION)) { gameMessageElement.classList.add('opponent-turn'); }
+             else if (isCardSelected) { gameMessageElement.classList.add('action-required'); }
+        }
+        // 僅更新計數器和分數的輔助函數 (邏輯不變)
+        function updateUICounters() { /* ... */
+             document.getElementById('player1-total-score').textContent = gameState.player1.score.total;
+            document.getElementById('player2-total-score').textContent = gameState.player2.score.total;
+            document.getElementById('player1-rounds-won').textContent = gameState.player1.roundsWon;
+            document.getElementById('player2-rounds-won').textContent = gameState.player2.roundsWon;
+             ['Presentations', 'Assignments', 'Exams'].forEach(field => {
+                document.getElementById(`player1-score-${field}`).textContent = gameState.player1.score[field];
+                document.getElementById(`player2-score-${field}`).textContent = gameState.player2.score[field];
+            });
+            document.getElementById('player1-hand-count').textContent = gameState.player1.hand.length;
+            document.getElementById('player2-hand-count').textContent = gameState.player2.hand.length;
+            document.getElementById('player1-deck-count').textContent = gameState.player1.deck.length;
+            document.getElementById('player1-discard-count').textContent = gameState.player1.discard.length;
+            document.getElementById('player2-deck-count').textContent = gameState.player2.deck.length;
+            document.getElementById('player2-discard-count').textContent = gameState.player2.discard.length;
+        }
+        // 創建卡牌的 HTML 元素 (邏輯不變)
+        function createCardElement(cardData, index, isSelectable = true) { /* ... */
+             const element = document.createElement('div');
+            element.className = 'card bg-white shadow';
+             if (isSelectable) { element.dataset.index = index; }
+             if (cardData.instanceId) { element.dataset.instanceId = cardData.instanceId; }
+             const credits = cardData.credits || {};
+            element.innerHTML = `
+                <div class="card-content flex flex-col justify-between h-full"> <div> <div class="card-name">${cardData.name}</div>
+                        <div class="card-type">${cardData.type}</div>
+                        <div class="card-credits"> P: ${credits.Presentations ?? 'N/A'} | A: ${credits.Assignments ?? 'N/A'} | E: ${credits.Exams ?? 'N/A'} </div>
+                        <div class="card-desc">${cardData.description || ''}</div> </div>
+                    <div> ${cardData.deployEffect ? `<div class="card-effect">Deploy: ${getEffectDescription(cardData.deployEffect)}</div>` : ''}
+                         ${cardData.synergy ? `<div class="card-effect">Synergy: ${cardData.synergy.type}</div>` : ''}
+                         ${cardData.stayOnField ? `<div class="card-effect stay">Effect: Stay on Field</div>` : ''} </div> </div> `;
+            return element;
+        }
+        // 獲取效果描述 (邏輯不變)
+        function getEffectDescription(effectType) { /* ... */
+             switch (effectType) { case 'drawCard': return 'Draw Card'; case 'boostField': return 'Boost Field'; case 'removeSynergyCard': return 'Remove Synergy Card'; default: return effectType; }
+        }
+        // 設定遊戲訊息 (邏輯不變)
+        function setMessage(message, type = '') { /* ... */
+             gameState.message = message; gameMessageElement.textContent = message; console.log("Game Message:", message);
+             gameMessageElement.className = 'game-message text-gray-700';
+             if (type === 'player-turn') gameMessageElement.classList.add('player-turn');
+             else if (type === 'opponent-turn') gameMessageElement.classList.add('opponent-turn');
+             else if (type === 'action-required') gameMessageElement.classList.add('action-required');
+        }
+        // 生成唯一 ID (邏輯不變)
+        function generateUniqueId() { /* ... */ return Date.now().toString(36) + Math.random().toString(36).substr(2); }
+
+        // --- 事件監聽器 ---
+        function handleHandClick(event) { /* ... */ if (gameState.currentPhase !== GamePhase.AWAITING_PLAYER_ACTION) return; const cardElement = event.target.closest('.card'); if (cardElement && cardElement.dataset.index !== undefined && !cardElement.classList.contains('disabled')) { selectCard(parseInt(cardElement.dataset.index)); } }
+        function handleFieldClick(event) { /* ... */ if (gameState.currentPhase !== GamePhase.CARD_SELECTED) return; const fieldElement = event.target.closest('.droppable-area'); if (fieldElement && fieldElement.classList.contains('droppable')) { playCardToField(fieldElement); } }
+
+        // --- 初始化 ---
+        document.addEventListener('DOMContentLoaded', () => {
+            // 不再直接調用 setupGame，而是顯示標題畫面
+            showScreen('title-screen'); // 初始顯示標題畫面
+            gameState.currentPhase = GamePhase.TITLE_SCREEN; // 設定初始階段
+
+            // 綁定啟動按鈕事件
+            startButton.addEventListener('click', startTraitSelection);
+
+            // 綁定繼續按鈕事件
+            continueButton.addEventListener('click', initializeGameInterface);
+
+            // 綁定遊戲主畫面事件監聽器
+            player1HandElement.addEventListener('click', handleHandClick);
+            passButton.addEventListener('click', playerPass);
+            cancelActionButton.addEventListener('click', cancelAction);
+             Object.values(player1Fields).forEach(fieldElement => {
+                 fieldElement.addEventListener('click', handleFieldClick);
+             });
+        });
+
+    </script>
+
+</body>
+</html>
