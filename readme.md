@@ -1,6 +1,8 @@
+## Introduction
 **Academia Arena** is a two-player strategic card game inspired by *Gwent* and *Hearthstone*, where players battle for academic dominance in a university-themed battlefield. This project is a passion-driven prototype created by David Weng and is now available as an open-source project on GitHub.
 
-🎥 **Game Intro
+## 🎥 **Game Intro Video**
+
 [![Introducing Academia Arena](https://img.youtube.com/vi/TH1QRsdxSWI/0.jpg)](https://www.youtube.com/watch?v=TH1QRsdxSWI)
 
 ---
