@@ -92,6 +92,8 @@
 </head>
 <body class="bg-gray-100 p-4">
 
+    <audio id="background-music" src="assets/academia-arena-theme.mp3" loop autoplay></audio> <!-- Added background music -->
+
     <div id="title-screen" class="screen container mx-auto max-w-2xl text-center">
         <h1 class="text-5xl font-bold text-blue-800 mb-6">Academia Arena</h1>
         <p class="text-xl text-gray-600 mb-10">The University Duel Simulator</p>
@@ -294,6 +296,15 @@
 
         // 開始特質選擇流程
         function startTraitSelection() {
+            // Attempt to play background music on user interaction
+            const bgMusic = document.getElementById('background-music');
+            if (bgMusic && bgMusic.paused) {
+                bgMusic.play().catch(error => {
+                    console.log("Background music playback failed:", error);
+                    // Optionally inform the user or provide manual controls if needed
+                });
+            }
+
             gameState.currentPhase = GamePhase.TRAIT_SELECTION;
             showScreen('trait-selection-screen');
             continueButton.disabled = true; // 開始選擇時禁用繼續按鈕
