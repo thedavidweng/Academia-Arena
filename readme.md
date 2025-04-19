@@ -10,7 +10,7 @@
 ## 📖 Game Rulebook
 [View the Game Rulebook](assets/game-handbook.pdf) for detailed rules and mechanics.
 
-## 📖 Designer Statement
+## 🧑‍🎨 Designer Statement
 [View the Designer Statement](assets/designer-statement.md) to see how this game engages with the frameworks of the GMST 475 course.
 
 ## 🎥 Game Intro Video
