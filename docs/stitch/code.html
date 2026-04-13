@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<link href="https://fonts.googleapis.com/css2?family=Epilogue:wght@700;900&amp;family=Manrope:wght@400;500;700&amp;family=Space_Grotesk:wght@500;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "tertiary-fixed": "#ffdad3",
+                    "on-surface-variant": "#59413c",
+                    "primary": "#aa301a",
+                    "on-error-container": "#93000a",
+                    "on-primary-container": "#fffbff",
+                    "background": "#fef9f1",
+                    "on-secondary-fixed-variant": "#474747",
+                    "on-tertiary-container": "#fffbff",
+                    "surface-bright": "#fef9f1",
+                    "inverse-surface": "#32302b",
+                    "primary-fixed": "#ffdad3",
+                    "on-error": "#ffffff",
+                    "primary-fixed-dim": "#ffb4a5",
+                    "on-background": "#1d1c17",
+                    "secondary-container": "#e4e2e1",
+                    "error-container": "#ffdad6",
+                    "tertiary-fixed-dim": "#ffb4a5",
+                    "on-surface": "#1d1c17",
+                    "error": "#ba1a1a",
+                    "secondary-fixed-dim": "#c8c6c6",
+                    "surface-dim": "#ded9d2",
+                    "outline": "#8d716b",
+                    "on-tertiary-fixed": "#3e0400",
+                    "on-secondary-container": "#656464",
+                    "inverse-on-surface": "#f5f0e8",
+                    "surface-container-high": "#ece8e0",
+                    "surface-container-lowest": "#ffffff",
+                    "outline-variant": "#e0bfb8",
+                    "surface-container": "#f2ede5",
+                    "surface-container-low": "#f8f3eb",
+                    "on-tertiary-fixed-variant": "#8b1906",
+                    "secondary": "#5f5e5e",
+                    "on-primary-fixed": "#3e0400",
+                    "surface-container-highest": "#e7e2da",
+                    "surface": "#fef9f1",
+                    "on-primary-fixed-variant": "#8b1906",
+                    "tertiary-container": "#cb4830",
+                    "surface-variant": "#e7e2da",
+                    "tertiary": "#aa301a",
+                    "primary-container": "#cb4830",
+                    "surface-tint": "#ad321c",
+                    "secondary-fixed": "#e4e2e1",
+                    "inverse-primary": "#ffb4a5",
+                    "on-secondary": "#ffffff",
+                    "on-tertiary": "#ffffff",
+                    "on-primary": "#ffffff",
+                    "on-secondary-fixed": "#1b1c1c"
+            },
+            "borderRadius": {
+                    "none": "0",
+                    "sm": "0",
+                    "md": "0",
+                    "lg": "0",
+                    "xl": "0",
+                    "full": "0"
+            },
+            "fontFamily": {
+                    "headline": ["Epilogue"],
+                    "body": ["Manrope"],
+                    "label": ["Space Grotesk"]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        body { font-family: 'Manrope', sans-serif; }
+        h1, h2, h3 { font-family: 'Epilogue', sans-serif; }
+        .label-text { font-family: 'Space_Grotesk', sans-serif; }
+        /* Force sharp corners globally per design system */
+        * { border-radius: 0 !important; }
+    </style>
+</head>
+<body class="bg-background text-on-surface min-h-screen flex flex-col">
+<!-- TopAppBar -->
+<header class="bg-[#fef9f1] dark:bg-[#1d1c17] flex justify-between items-center w-full px-6 h-16 border-b-2 border-[#1d1c17] dark:border-[#fef9f1] fixed top-0 z-50">
+<div class="text-2xl font-black tracking-tighter text-[#1d1c17] dark:text-[#fef9f1] uppercase font-['Epilogue'] tracking-tighter uppercase font-black">
+            ACADEMIA ARENA
+        </div>
+<div class="flex gap-4">
+<div class="flex items-center gap-2 px-3 py-1 bg-surface-container-high border border-on-surface">
+<span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">account_balance_wallet</span>
+<span class="label-text text-xs font-bold uppercase tracking-widest">CREDITS: 1,240</span>
+</div>
+<div class="flex items-center gap-2 px-3 py-1 bg-primary text-on-primary">
+<span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">bolt</span>
+<span class="label-text text-xs font-bold uppercase tracking-widest">TURN 08</span>
+</div>
+<div class="flex gap-2">
+<span class="material-symbols-outlined cursor-pointer hover:bg-[#aa301a] hover:text-[#fef9f1] transition-colors duration-100 p-1">emoji_events</span>
+</div>
+</div>
+</header>
+<!-- SideNavBar (Strategy Sidebar) -->
+<aside class="bg-[#f8f3eb] dark:bg-[#1d1c17] fixed right-0 top-16 bottom-0 flex flex-col items-center py-8 w-24 border-l-2 border-[#1d1c17] dark:border-[#fef9f1] z-40">
+<div class="mb-8 text-center px-2">
+<div class="font-['Space_Grotesk'] text-[10px] font-bold uppercase tracking-widest opacity-60">ACTION</div>
+<div class="font-['Space_Grotesk'] text-[10px] font-bold uppercase tracking-widest">MENU</div>
+</div>
+<nav class="flex flex-col gap-6 w-full">
+<div class="flex flex-col items-center gap-1 group cursor-pointer text-[#1d1c17] dark:text-[#fef9f1] hover:invert transition-colors">
+<span class="material-symbols-outlined text-2xl">genetics</span>
+<span class="font-['Space_Grotesk'] text-[8px] font-bold uppercase tracking-widest">Traits</span>
+</div>
+<div class="flex flex-col items-center gap-1 group cursor-pointer text-[#1d1c17] dark:text-[#fef9f1] hover:invert transition-colors">
+<span class="material-symbols-outlined text-2xl">history</span>
+<span class="font-['Space_Grotesk'] text-[8px] font-bold uppercase tracking-widest">Back</span>
+</div>
+<div class="flex flex-col items-center gap-1 group cursor-pointer bg-[#aa301a] text-[#fef9f1] py-4 w-full">
+<span class="material-symbols-outlined text-2xl">favorite</span>
+<span class="font-['Space_Grotesk'] text-[8px] font-bold uppercase tracking-widest">Physio</span>
+</div>
+<div class="flex flex-col items-center gap-1 group cursor-pointer text-[#1d1c17] dark:text-[#fef9f1] hover:invert transition-colors">
+<span class="material-symbols-outlined text-2xl">psychology</span>
+<span class="font-['Space_Grotesk'] text-[8px] font-bold uppercase tracking-widest">Psych</span>
+</div>
+</nav>
+<button class="mt-auto bg-on-surface text-surface py-6 w-full font-headline font-black text-sm uppercase tracking-tighter rotate-180 [writing-mode:vertical-lr] active:translate-x-1 transition-transform">
+            PASS TURN
+        </button>
+</aside>
+<main class="flex-1 mt-16 mr-24 mb-20 p-6 flex flex-col gap-6 overflow-hidden">
+<!-- Opponent Status -->
+<section class="grid grid-cols-12 gap-4 items-end">
+<div class="col-span-3 bg-surface-container-highest border-b-4 border-on-surface p-4 flex items-center gap-4">
+<div class="w-16 h-16 bg-on-surface overflow-hidden relative">
+<img class="w-full h-full object-cover opacity-80 grayscale" data-alt="close-up profile of a stoic academic researcher with sharp lighting and deep shadows in an archival setting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBoxJvJL20XJvNe1TTgVMInEYYdgQ6FcuZ0Deh6s3qVdlU5brlQwtg2EQZ5dCofAhNOzkZB6MtJVFfUSnY78PzPnxlMbluGjkey3ktYqIZJEhb5HH0QpKaf64VYNESFppRLCSa3eNQylQn3raJ8HOawkxMj1q0Sq49cRY8S_VGKl749W4Av6kvfMuPQmrtCAmUto4rt3gbVBo-Vi6Bj64GO1dALQtUR-wF6ynrg3pHc02rKZT9zt_taiUdsYqYvIG3r1AZJ8eJdfn_5"/>
+</div>
+<div>
+<h3 class="font-headline font-black text-xl uppercase tracking-tighter">DEAN VANCE</h3>
+<p class="label-text text-xs uppercase font-bold opacity-70">OPPONENT STATUS: STABLE</p>
+</div>
+</div>
+<div class="col-span-6 flex gap-2 justify-center">
+<div class="w-12 h-16 bg-on-surface border border-outline opacity-40"></div>
+<div class="w-12 h-16 bg-on-surface border border-outline opacity-40"></div>
+<div class="w-12 h-16 bg-on-surface border border-outline opacity-40"></div>
+<div class="w-12 h-16 bg-on-surface border border-outline opacity-40"></div>
+<div class="w-12 h-16 bg-on-surface border border-outline opacity-40"></div>
+</div>
+<div class="col-span-3 text-right">
+<div class="label-text text-3xl font-bold text-primary">04 / 12</div>
+<div class="label-text text-[10px] uppercase font-bold tracking-[0.2em] opacity-60">OPPONENT ENERGY</div>
+</div>
+</section>
+<!-- Battlefields / Lanes -->
+<section class="flex-1 grid grid-cols-3 gap-6">
+<!-- Lane 1: Presentations -->
+<div class="bg-surface-container border-2 border-on-surface flex flex-col relative">
+<div class="bg-secondary text-on-primary py-1 px-3 absolute -top-3 left-4 label-text text-[10px] font-bold uppercase tracking-widest z-10">
+                    PRESENTATIONS
+                </div>
+<!-- Opponent Side -->
+<div class="flex-1 flex flex-col items-center justify-end p-4 border-b border-dashed border-on-surface gap-2">
+<div class="w-24 h-32 bg-surface-container-highest border-2 border-on-surface p-2 shadow-sm relative">
+<div class="bg-on-surface text-surface text-[8px] absolute top-0 right-0 px-1 font-bold">4</div>
+<img class="w-full h-1/2 object-cover grayscale brightness-75 mb-1" data-alt="charcoal sketch of a classic library interior with high windows and dust motes in sunlight" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDY_eiiXfXf38RglE_iwO8rHEaxWduXNgj1yxdwnTgwz9Mqb0NLYBhHMlyzz3GQdZHq5KyrpNjElX2Q6tME1dRasAgtoUByoZqmOpTupeG8xEzqUdZPHF0WUjo0E3Jw_GPUAfiGeRT4Ux1eud3LWG1DCWJyyMPODecO9ZK5zgWLgWN76Qybx92JZgmyufKlx4aQxNMHmfnRzsprcLc1fnY8sJ1gr2vtc3sSPpHyAy8gXZB97loHlhk1aeeB9e5PDqE0S1tnzlX42XvV"/>
+<div class="text-[8px] font-bold uppercase leading-none">Thesis Defense</div>
+</div>
+</div>
+<!-- Lane Info -->
+<div class="h-12 flex justify-between items-center px-4 bg-on-surface text-surface">
+<div class="label-text font-black text-xl">12</div>
+<div class="w-px h-6 bg-surface opacity-30"></div>
+<div class="label-text font-black text-xl text-primary">08</div>
+</div>
+<!-- Player Side -->
+<div class="flex-1 flex flex-col items-center justify-start p-4 gap-2">
+<div class="w-24 h-32 bg-surface-container-lowest border-2 border-primary p-2 shadow-md relative">
+<div class="bg-primary text-on-primary text-[8px] absolute top-0 right-0 px-1 font-bold">6</div>
+<img class="w-full h-1/2 object-cover grayscale mb-1" data-alt="black and white architecture photo of a brutalist lecture hall with sharp geometric shadows" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA3NMpqXRprCprh1TCIoHE6EkEJq8qq9g5JXSOU1wiclZbieqrXRREeTFsRhtqLes6GofOvncsmv2uRWpGzeuenonWruXQoNUyohHd71nFXswsf-wMHNMp54IyFX3fTKeFkwuJxwi56MomPi9CCzzN-WPaDLDZ19Nec6A_IqYKw1fsGcLMuEoJUT8BJ2ncB2OtUuZJdYeh1Ib43zM1Zvwr1HCzSEoRipE0Z4srcfk1MqB-tvqidSg6fs7i2zYRS0KIrq8tXhImRtbrA"/>
+<div class="text-[8px] font-bold uppercase leading-none">Flash Talk</div>
+</div>
+</div>
+</div>
+<!-- Lane 2: Assignments -->
+<div class="bg-surface-container border-2 border-on-surface flex flex-col relative">
+<div class="bg-on-surface text-on-primary py-1 px-3 absolute -top-3 left-4 label-text text-[10px] font-bold uppercase tracking-widest z-10">
+                    ASSIGNMENTS
+                </div>
+<!-- Opponent Side -->
+<div class="flex-1 flex flex-col items-center justify-end p-4 border-b border-dashed border-on-surface gap-2">
+<div class="text-xs uppercase font-bold opacity-30 label-text">Empty Zone</div>
+</div>
+<!-- Lane Info -->
+<div class="h-12 flex justify-between items-center px-4 bg-on-surface text-surface">
+<div class="label-text font-black text-xl">00</div>
+<div class="w-px h-6 bg-surface opacity-30"></div>
+<div class="label-text font-black text-xl text-primary">04</div>
+</div>
+<!-- Player Side -->
+<div class="flex-1 flex flex-col items-center justify-start p-4 gap-2">
+<div class="w-24 h-32 bg-surface-container-lowest border-2 border-on-surface p-2 shadow-sm relative">
+<div class="bg-on-surface text-surface text-[8px] absolute top-0 right-0 px-1 font-bold">4</div>
+<img class="w-full h-1/2 object-cover grayscale mb-1" data-alt="macro photo of an ink pen resting on a stack of aged yellowed papers with typewriter text" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA9thxBFgY7iYmv7d10xY-G5x6CZ9JtmlQWBnFGQiYmy9M_EkBNQmCVFGEirWglYpCaWwNGeEiPAu4Shmw9e9rAWv7nXkyAR9g3B_XefMCLqq_sHA-9gZtcZHKc-glPmoko7VUrneOyYd7bMX6LEMRT0Y1-GpwYTp2KwUGM1Rm-8YUAjsxtCBDyrB9QZieri0LwqJGKe9av1iFRFCFUqlmfoKouqJ62TqwQ6KobDPqs_DXpDXoZLJ5ZvJx4KsJePiaYRwJ_mqu9l8FN"/>
+<div class="text-[8px] font-bold uppercase leading-none">Drafting</div>
+</div>
+</div>
+</div>
+<!-- Lane 3: Exams -->
+<div class="bg-surface-container border-2 border-on-surface flex flex-col relative overflow-hidden">
+<!-- Visual Tonal Shift for Exams Zone -->
+<div class="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent pointer-events-none"></div>
+<div class="bg-primary text-on-primary py-1 px-3 absolute -top-3 left-4 label-text text-[10px] font-bold uppercase tracking-widest z-10">
+                    EXAMS
+                </div>
+<!-- Opponent Side -->
+<div class="flex-1 flex flex-col items-center justify-end p-4 border-b border-dashed border-on-surface gap-2">
+<div class="w-24 h-32 bg-surface-container-highest border-2 border-on-surface p-2 shadow-sm relative">
+<div class="bg-on-surface text-surface text-[8px] absolute top-0 right-0 px-1 font-bold">15</div>
+<img class="w-full h-1/2 object-cover grayscale brightness-50 mb-1" data-alt="dramatic lighting on a chalkboard filled with complex mathematical formulas and geometric diagrams" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBZ599VWDJ4GPj_sO-UE8sMpQmMugzW0rq8U35LGRDO-lc2OfsReOYoqZVq_0JzmaeQYCmgF6kbQqW4TDN_5FHbt6r_g8x8T9Rfp0eQC3tAUWOx2EjCyYR7wNAVeuxqESPDiLDZEYY_i3vGY44wGle3k8bkI52K9gwjxMkXthKUfQ3aWph2kADW9yyESnp-PrR1INPrGaeUqucqE473UF4_Si559qooOP-_Os-cPz5ZhVay8zHsrkOr175vv7Oi1xoJEWD6lUBUupCJ"/>
+<div class="text-[8px] font-bold uppercase leading-none">Final Paper</div>
+</div>
+</div>
+<!-- Lane Info -->
+<div class="h-12 flex justify-between items-center px-4 bg-primary text-on-primary">
+<div class="label-text font-black text-xl">15</div>
+<div class="w-px h-6 bg-on-primary opacity-30"></div>
+<div class="label-text font-black text-xl">00</div>
+</div>
+<!-- Player Side -->
+<div class="flex-1 flex flex-col items-center justify-start p-4 gap-2">
+<div class="text-xs uppercase font-bold opacity-30 label-text">Empty Zone</div>
+</div>
+</div>
+</section>
+<!-- Player Interface -->
+<section class="grid grid-cols-12 gap-4 items-center">
+<div class="col-span-3 flex flex-col gap-2">
+<div class="flex items-center gap-4">
+<div class="w-16 h-16 border-2 border-primary overflow-hidden relative">
+<img class="w-full h-full object-cover" data-alt="profile portrait of a focused student with a sharp gaze and intellectual presence, low key lighting, monochrome" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCpQC-UL1Wi7oCV0vUwQ5lW_j8USFHUwee3PV3dTcC7EbqLSJ3cG2z9bErZv0DwzeppJnoq09Cbe86QJONvxlWNQxbISmuGPr4GdBfrQT4fzaLL-49MSYBHxA8MZTPPgJZC0LrJfod6YVVlyVtYzpTjWOorkHChMtxOmrr9_Ym9fvcSRnmCXI7Kqim3HJoc-dwgdlyKdvgDUspD2sE-weBzgu8V5w4UghC3sKsl_z3gyR96roB-xViau5LTHhODUNe-c-u192n_Qzcl"/>
+</div>
+<div>
+<h3 class="font-headline font-black text-xl uppercase tracking-tighter text-primary">YOU</h3>
+<p class="label-text text-xs uppercase font-bold opacity-70">CREDITS: 084</p>
+</div>
+</div>
+<div class="w-full bg-surface-dim h-4 relative">
+<div class="absolute inset-0 bg-primary w-[66.6%] flex items-center justify-end px-2">
+<span class="label-text text-[8px] font-black text-on-primary">08 / 12 ENERGY</span>
+</div>
+</div>
+</div>
+<!-- Hand -->
+<div class="col-span-9 flex justify-center gap-4">
+<!-- Card 1 -->
+<div class="w-32 h-44 bg-surface-container-lowest border-2 border-on-surface p-2 shadow-lg flex flex-col transform hover:-translate-y-4 transition-transform group cursor-pointer relative">
+<div class="flex justify-between items-start mb-1">
+<div class="label-text text-[10px] font-bold uppercase">Logic</div>
+<div class="w-5 h-5 bg-on-surface text-surface label-text flex items-center justify-center font-black text-xs">2</div>
+</div>
+<img class="w-full h-20 object-cover grayscale mb-2" data-alt="technical blueprint of a complex machine with rigid lines and precise measurements" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBiTNyc7LvxMlD02cKnA40_nnlrf6W4IF7YISUVfOmcbw1ga-gsP7UxtRw8pIirbS1JQ_yBjrhf_5SpC-WzhemVHOgQ6XtGcPv6TEuKbiHg0iyL8DoCZ2iQY64EWU3wtvY0bPzN-jgKmau59s5p6QvqQZ7ZTvl4prhDWQbe6sZEaLS6f-aiZ9o32YuU1FWGKTqlRzMg7iPTOI_czm3hWiJSzOaRGdz3qzgzKbx0FvUHNGqfFuyVI9j-n8m1OUUEbVEBZRvE_mi9XWGT"/>
+<h4 class="font-headline font-black text-[10px] uppercase leading-none mb-1">Peer Review</h4>
+<p class="text-[8px] leading-tight opacity-70 line-clamp-2">Modify a card's current credit output by 50%.</p>
+<button class="mt-auto bg-primary text-on-primary py-1 label-text text-[8px] font-bold uppercase opacity-0 group-hover:opacity-100 transition-opacity">INTERVENE</button>
+</div>
+<!-- Card 2 (Active/Hover) -->
+<div class="w-32 h-44 bg-surface-container-lowest border-2 border-primary p-2 shadow-2xl flex flex-col -translate-y-6 scale-110 z-20 group cursor-pointer">
+<div class="flex justify-between items-start mb-1">
+<div class="label-text text-[10px] font-bold uppercase text-primary">Strategy</div>
+<div class="w-5 h-5 bg-primary text-on-primary label-text flex items-center justify-center font-black text-xs">4</div>
+</div>
+<img class="w-full h-20 object-cover grayscale mb-2" data-alt="close up of a vintage typewriter key showing the word 'publish' in stark relief" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDgOD0-vE0aeCotEzy-q2KIlp8DRRDLQ_uE--ltHdPdByA6AhTiMThzF8xRUpvcy0qkmfS0T1Hoqa2AdBpdNkuYff7muA59mcvuW_d5zJa6vDBUa4UaCaOf9Mtydmda1yXE1OpnvCbuGGGJVMRK5DxuROgKbz7hkzng2z4m6w489eHNgapWxzEr-RKzBN-b1rdH-5NuHQt1rRSCK8k5TgZmBEoQKMFlSdWayiVQI7WjEAKPsFLWr9gTQ3GkO06FyoB7Zy-GlqNZLN2X"/>
+<h4 class="font-headline font-black text-[10px] uppercase leading-none mb-1 text-primary">Quick Cite</h4>
+<p class="text-[8px] leading-tight opacity-70 line-clamp-2">Instantly add 4 points to any lane marker.</p>
+<button class="mt-auto bg-primary text-on-primary py-1 label-text text-[8px] font-bold uppercase">INTERVENE</button>
+</div>
+<!-- Card 3 -->
+<div class="w-32 h-44 bg-surface-container-lowest border-2 border-on-surface p-2 shadow-lg flex flex-col transform hover:-translate-y-4 transition-transform group cursor-pointer relative">
+<div class="flex justify-between items-start mb-1">
+<div class="label-text text-[10px] font-bold uppercase">Research</div>
+<div class="w-5 h-5 bg-on-surface text-surface label-text flex items-center justify-center font-black text-xs">3</div>
+</div>
+<img class="w-full h-20 object-cover grayscale mb-2" data-alt="open old book with ink stains on pages, high contrast brutalist aesthetic" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBbQxzYP_i3dQiDtuuuVP-7VbRmmoOInmFvv89NikaA1zZabS4QFT2ynOcK0cv1sbuN8W3nrcq2pV4EenG2HHt2Ng06WAksOEOdv_ScTvqErUfCT2upc3AjfkTWKyHPbWtxVZsk91V_tWPucQRFf5rf8XJlvKMFVZfW9qx9ur0MnaEl-vlg2QfPFa41TAxBE7BdhcwfpuZGXmWbAbCwqlYGYV8UzDJHqO4MP7Al06tnPFj-xLNGcvuwEibciU3o6ImXmBlO_W47Pqg3"/>
+<h4 class="font-headline font-black text-[10px] uppercase leading-none mb-1">Library Hour</h4>
+<p class="text-[8px] leading-tight opacity-70 line-clamp-2">Draw 2 cards from your archive deck.</p>
+<button class="mt-auto bg-primary text-on-primary py-1 label-text text-[8px] font-bold uppercase opacity-0 group-hover:opacity-100 transition-opacity">INTERVENE</button>
+</div>
+<!-- Card 4 -->
+<div class="w-32 h-44 bg-surface-container-lowest border-2 border-on-surface p-2 shadow-lg flex flex-col transform hover:-translate-y-4 transition-transform group cursor-pointer relative">
+<div class="flex justify-between items-start mb-1">
+<div class="label-text text-[10px] font-bold uppercase">Theory</div>
+<div class="w-5 h-5 bg-on-surface text-surface label-text flex items-center justify-center font-black text-xs">1</div>
+</div>
+<img class="w-full h-20 object-cover grayscale mb-2" data-alt="abstract geometric pattern of architectural concrete stairs with deep shadows" src="https://lh3.googleusercontent.com/aida-public/AB6AXuALwTg89uUEGrEd8QsXwFMX-aZDVCcnowyFbX4dcCgwsBMMDVqnaKIPlmZi1Vosew2YzHWQkDsLD3KX36O3IetTbAbV-Nf7a2ISptwl77G6_QM5z3X4JRvqfdWGNXjj0mHxhf1yQnL6f_EeVXOejFWYc_5inK3eZ7Ag_k0NpVSFRAB2AsjZ0HVuGqe-mxEc69L7zQfneNc1YKe57vQhERQqRS7rLs9b2zWkwV9yltM6PM7Bgb9wKdJfRBXIdRHiBRfhIlXmWy8MHl9r"/>
+<h4 class="font-headline font-black text-[10px] uppercase leading-none mb-1">Seminar</h4>
+<p class="text-[8px] leading-tight opacity-70 line-clamp-2">Gain 1 Energy for every card in Presentations.</p>
+<button class="mt-auto bg-primary text-on-primary py-1 label-text text-[8px] font-bold uppercase opacity-0 group-hover:opacity-100 transition-opacity">INTERVENE</button>
+</div>
+</div>
+</section>
+</main>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center h-20 px-4 bg-[#1d1c17] dark:bg-[#fef9f1] border-t-4 border-[#aa301a] shadow-[0_-10px_20px_rgba(29,28,23,0.1)]">
+<a class="flex flex-col items-center justify-center text-[#fef9f1] dark:text-[#1d1c17] p-3 hover:bg-[#cb4830] transition-transform scale-95 active:scale-90" href="#">
+<span class="material-symbols-outlined text-2xl">inventory_2</span>
+<span class="font-['Space_Grotesk'] text-[10px] uppercase font-bold">Inventory</span>
+</a>
+<a class="flex flex-col items-center justify-center text-[#fef9f1] dark:text-[#1d1c17] p-3 hover:bg-[#cb4830] transition-transform scale-95 active:scale-90" href="#">
+<span class="material-symbols-outlined text-2xl">menu_book</span>
+<span class="font-['Space_Grotesk'] text-[10px] uppercase font-bold">The Archive</span>
+</a>
+<a class="flex flex-col items-center justify-center bg-[#aa301a] text-[#fef9f1] p-3 transition-transform scale-95 active:scale-90" href="#">
+<span class="material-symbols-outlined text-2xl">architecture</span>
+<span class="font-['Space_Grotesk'] text-[10px] uppercase font-bold">Tactics</span>
+</a>
+</nav>
+</body></html>
