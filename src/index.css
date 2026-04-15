@@ -1,0 +1,126 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: 'Manrope', sans-serif;
+  background-color: #fef9f1;
+  color: #1d1c17;
+  min-height: 100vh;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Epilogue', sans-serif;
+}
+
+.label {
+  font-family: 'Space Grotesk', monospace;
+}
+
+/* Ghost border */
+.ghost-border {
+  outline: 1px solid rgba(224, 191, 184, 0.2);
+}
+
+/* No-line surface shifts */
+.surface-low {
+  background-color: #f8f3eb;
+}
+
+.surface-high {
+  background-color: #ece8e0;
+}
+
+.surface-lowest {
+  background-color: #ffffff;
+}
+
+/* Ambient shadow */
+.ambient-shadow {
+  box-shadow: 0 20px 40px rgba(29, 28, 23, 0.06);
+}
+
+/* Glassmorphism overlay */
+.glass-overlay {
+  background-color: rgba(254, 249, 241, 0.8);
+  backdrop-filter: blur(12px);
+}
+
+/* Exam zone gradient */
+.exam-gradient {
+  background: linear-gradient(135deg, #aa301a, #cb4830);
+}
+
+/* Bleed text effect */
+.bleed-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Card hover */
+.game-card {
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.game-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 20px 40px rgba(29, 28, 23, 0.08);
+}
+
+.game-card.selected {
+  outline: 2px solid #aa301a;
+  outline-offset: 2px;
+}
+
+/* Stamina bar */
+.stamina-segment {
+  width: 12px;
+  height: 24px;
+  transition: background-color 0.2s ease;
+}
+
+.stamina-segment.filled {
+  background-color: #aa301a;
+}
+
+.stamina-segment.empty {
+  background-color: #f0ebe3;
+}
+
+/* Game log */
+.game-log::-webkit-scrollbar {
+  width: 4px;
+}
+
+.game-log::-webkit-scrollbar-track {
+  background: #f8f3eb;
+}
+
+.game-log::-webkit-scrollbar-thumb {
+  background: #e0bfb8;
+}
+
+/* Lane droppable */
+.lane-droppable {
+  outline: 2px dashed #aa301a;
+  outline-offset: -2px;
+  background-color: rgba(170, 48, 26, 0.04);
+}
+
+/* Tooltip */
+.tooltip {
+  background-color: #1d1c17;
+  color: #fef9f1;
+  font-family: 'Space Grotesk', monospace;
+  font-size: 0.75rem;
+  padding: 4px 8px;
+  white-space: nowrap;
+  pointer-events: none;
+  transition: opacity 0ms;
+}

@@ -1,6 +1,3 @@
-## Cursor Cloud specific instructions
-
-If you (the setup agent) read this file, you must immediately begin the project refactoring task as defined in the instructions below. The environment setup and initialization phase is NOT considered complete until the full refactoring (Step 1 to 5) is finished. Note: Once the refactored version contains all features from the original prototype, you do NOT need to keep the legacy files (like `index.html`) as a fallback or reference.
 
 [System Context]
 
