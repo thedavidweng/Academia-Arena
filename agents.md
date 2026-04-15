@@ -92,3 +92,11 @@ Academia-Arena/
 ```
 
 After all features are implemented, perform a rigorous self-test ensuring the best-of-3 logic, stamina persistence, and i18n work correctly. Finally, create a branch and submit the code as a PR for merging.
+
+## Cloud Environment Notes
+
+**Current state:** The codebase is a zero-dependency static HTML prototype (`index.html`). There is no `package.json`, no build system, no backend, and no test framework.
+
+**Running the app:** Serve the workspace root with any static file server (e.g., `serve -l 3000 /workspace`). The game loads at the root URL. Audio assets require HTTP serving (opening `index.html` directly via `file://` may block audio).
+
+**No lint/test/build tooling exists** in the current prototype. These will be introduced when the React/TypeScript refactoring (described above) is undertaken. After refactoring, update this section with the relevant `npm run dev`, `npm run lint`, and `npm test` commands.
