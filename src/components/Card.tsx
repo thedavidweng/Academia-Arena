@@ -18,13 +18,6 @@ export function Card({ card, selected, onClick, compact }: CardProps) {
   const name = isZh && card.nameZh ? card.nameZh : card.name;
   const desc = isZh && card.descriptionZh ? card.descriptionZh : card.description;
 
-  const borderColor =
-    card.type === 'Event'
-      ? 'outline-variant'
-      : selected
-        ? 'outline-primary'
-        : 'outline-variant';
-
   return (
     <div
       onClick={onClick}
@@ -42,17 +35,17 @@ export function Card({ card, selected, onClick, compact }: CardProps) {
           {name}
         </div>
         <div className="label text-[10px] text-on-surface/50 uppercase tracking-wider mt-0.5">
-          {card.type === 'Character' ? 'CHAR' : 'EVENT'}
+          {card.type === 'Character' ? t('card.char') : t('card.event')}
         </div>
 
         {card.type === 'Character' && (
           <div className="label text-[10px] mt-1 space-y-0.5">
             <div>
-              <span className="text-on-surface/40">P:</span> {card.credits.Presentations}
+              <span className="text-on-surface/40">{t('card.credits.p')}</span> {card.credits.Presentations}
               <span className="text-on-surface/20 mx-1">|</span>
-              <span className="text-on-surface/40">A:</span> {card.credits.Assignments}
+              <span className="text-on-surface/40">{t('card.credits.a')}</span> {card.credits.Assignments}
               <span className="text-on-surface/20 mx-1">|</span>
-              <span className="text-on-surface/40">E:</span> {card.credits.Exams}
+              <span className="text-on-surface/40">{t('card.credits.e')}</span> {card.credits.Exams}
             </div>
           </div>
         )}
@@ -67,17 +60,17 @@ export function Card({ card, selected, onClick, compact }: CardProps) {
       <div className="mt-auto space-y-0.5">
         {card.deployEffect && (
           <div className="label text-[9px] text-primary font-medium uppercase">
-            Deploy: {card.deployEffect}
+            {t('card.deploy')}: {card.deployEffect}
           </div>
         )}
         {card.synergy && (
           <div className="label text-[9px] text-on-surface/50 font-medium uppercase">
-            Synergy: {t(`synergy.${card.synergy.type.toLowerCase().replace(/\s/g, '')}`, card.synergy.type)}
+            {t('card.synergy')}: {t(`synergy.${card.synergy.type.toLowerCase().replace(/\s/g, '')}`, card.synergy.type)}
           </div>
         )}
         {card.stayOnField && (
           <div className="label text-[9px] text-green-700 font-medium uppercase">
-            Stay on Field
+            {t('card.stayOnField')}
           </div>
         )}
       </div>

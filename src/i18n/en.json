@@ -21,6 +21,8 @@
   "game.stamina": "Stamina",
   "game.pass": "Pass",
   "game.cancel": "Cancel",
+  "game.undo": "Undo",
+  "game.redo": "Redo",
   "game.yourTurn": "Your Turn",
   "game.opponentTurn": "Opponent's Turn",
   "game.selectCard": "Select a card or Pass.",
@@ -38,6 +40,8 @@
   "stamina.cost": "Cost",
   "gameLog.title": "Activity Log",
   "gameLog.empty": "No actions yet.",
+  "gameLog.showAll": "Show All",
+  "gameLog.collapse": "Collapse",
   "synergy.essayGhostwriting": "Essay Ghostwriting",
   "synergy.success": "Success! Credits doubled!",
   "synergy.caught": "Caught cheating! Both expelled!",
@@ -47,5 +51,14 @@
   "gameOver.title": "Game Over",
   "gameOver.winner": "wins the Academic Year!",
   "gameOver.draw": "It's a draw!",
-  "gameOver.playAgain": "Play Again"
+  "gameOver.playAgain": "Play Again",
+  "card.char": "CHAR",
+  "card.event": "EVENT",
+  "card.deploy": "Deploy",
+  "card.synergy": "Synergy",
+  "card.stayOnField": "Stay on Field",
+  "card.credits.p": "P:",
+  "card.credits.a": "A:",
+  "card.credits.e": "E:",
+  "lane.empty": "EMPTY"
 }

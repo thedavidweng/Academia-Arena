@@ -21,6 +21,8 @@
   "game.stamina": "精力",
   "game.pass": "跳过",
   "game.cancel": "取消",
+  "game.undo": "撤销",
+  "game.redo": "重做",
   "game.yourTurn": "你的回合",
   "game.opponentTurn": "对手回合",
   "game.selectCard": "选择一张卡牌或跳过。",
@@ -38,6 +40,8 @@
   "stamina.cost": "消耗",
   "gameLog.title": "活动日志",
   "gameLog.empty": "暂无操作。",
+  "gameLog.showAll": "查看全部",
+  "gameLog.collapse": "折叠",
   "synergy.essayGhostwriting": "论文代写",
   "synergy.success": "成功！学分翻倍！",
   "synergy.caught": "被抓到作弊！双双退学！",
@@ -47,5 +51,14 @@
   "gameOver.title": "游戏结束",
   "gameOver.winner": "赢得学年冠军！",
   "gameOver.draw": "平局！",
-  "gameOver.playAgain": "再来一局"
+  "gameOver.playAgain": "再来一局",
+  "card.char": "角色",
+  "card.event": "事件",
+  "card.deploy": "部署",
+  "card.synergy": "协同",
+  "card.stayOnField": "驻留场上",
+  "card.credits.p": "演:",
+  "card.credits.a": "作:",
+  "card.credits.e": "考:",
+  "lane.empty": "空"
 }

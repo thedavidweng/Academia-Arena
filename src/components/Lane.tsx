@@ -50,7 +50,7 @@ export function Lane({ fieldName, cards, score, droppable, onClick, isOpponent }
       {/* Cards */}
       <div className="flex flex-wrap gap-1.5 flex-1 items-start">
         {cards.length === 0 ? (
-          <div className="text-xs text-on-surface/30 italic label mt-4">EMPTY</div>
+          <div className="text-xs text-on-surface/30 italic label mt-4">{t('lane.empty')}</div>
         ) : (
           cards.map((card) => (
             <Card key={card.instanceId} card={card} compact />
