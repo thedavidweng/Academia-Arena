@@ -1,9 +1,11 @@
 // =============================================================================
 // App.tsx — Client entry point
 // =============================================================================
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Client } from 'boardgame.io/react';
 import { Local } from 'boardgame.io/multiplayer';
+// @ts-ignore — MCTSBot is exported at runtime but types are incomplete in v0.50
+import { MCTSBot } from 'boardgame.io';
 import { AcademiaArena } from './game/game';
 import { Arena } from './components/Arena';
 import { useTranslation } from 'react-i18next';
@@ -14,13 +16,38 @@ const GameClient = Client<G>({
   game: AcademiaArena,
   board: Arena as React.ComponentType<BoardProps<G>>,
   numPlayers: 2,
-  multiplayer: Local(),
+  multiplayer: Local({
+    bots: { '1': MCTSBot },
+  }),
 });
 
 export default function App() {
   const { t, i18n } = useTranslation();
   const [started, setStarted] = useState(false);
   const [lang, setLang] = useState('en');
+  const [musicPlaying, setMusicPlaying] = useState(false);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  useEffect(() => {
+    const audio = new Audio('/academia-arena-theme.mp3');
+    audio.loop = true;
+    audio.volume = 0.3;
+    audioRef.current = audio;
+    return () => {
+      audio.pause();
+      audio.src = '';
+    };
+  }, []);
+
+  const toggleMusic = () => {
+    if (!audioRef.current) return;
+    if (musicPlaying) {
+      audioRef.current.pause();
+    } else {
+      audioRef.current.play().catch(() => {});
+    }
+    setMusicPlaying(!musicPlaying);
+  };
 
   const toggleLang = () => {
     const next = lang === 'en' ? 'zh' : 'en';
@@ -31,12 +58,20 @@ export default function App() {
   if (!started) {
     return (
       <div className="min-h-screen surface flex flex-col items-center justify-center">
-        <button
-          onClick={toggleLang}
-          className="absolute top-6 right-6 label text-xs uppercase tracking-wider text-on-surface/40 hover:text-on-surface transition-colors"
-        >
-          {lang === 'en' ? '中文' : 'EN'}
-        </button>
+        <div className="absolute top-6 right-6 flex items-center gap-4">
+          <button
+            onClick={toggleMusic}
+            className="label text-xs uppercase tracking-wider text-on-surface/40 hover:text-on-surface transition-colors"
+          >
+            {musicPlaying ? '♫ ON' : '♫ OFF'}
+          </button>
+          <button
+            onClick={toggleLang}
+            className="label text-xs uppercase tracking-wider text-on-surface/40 hover:text-on-surface transition-colors"
+          >
+            {lang === 'en' ? '中文' : 'EN'}
+          </button>
+        </div>
 
         <div className="text-center">
           <h1 className="font-display text-7xl md:text-9xl font-black uppercase tracking-tighter text-on-surface leading-none">

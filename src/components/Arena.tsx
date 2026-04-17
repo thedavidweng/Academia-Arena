@@ -1,7 +1,7 @@
 // =============================================================================
 // Arena.tsx — Main game board container
 // =============================================================================
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { BoardProps } from 'boardgame.io/react';
 import type { G, CardInstance, FieldName } from '../game/types';
@@ -11,7 +11,7 @@ import { StaminaAction } from './StaminaAction';
 import { GameLog } from './GameLog';
 import { cn } from '../lib/utils';
 
-export function Arena({ G, ctx, moves, playerID }: BoardProps<G>) {
+export function Arena({ G, ctx, moves, playerID, undo, redo }: BoardProps<G> & { undo?: () => void; redo?: () => void }) {
   const { t, i18n } = useTranslation();
   const [selectedHandIndex, setSelectedHandIndex] = useState<number | null>(null);
   const [lang, setLang] = useState(i18n.language);
@@ -25,6 +25,8 @@ export function Arena({ G, ctx, moves, playerID }: BoardProps<G>) {
 
   const isMyTurn = ctx.currentPlayer === myIdx;
   const fields: FieldName[] = ['Presentations', 'Assignments', 'Exams'];
+
+  const isZh = lang === 'zh';
 
   const toggleLang = () => {
     const next = lang === 'en' ? 'zh' : 'en';
@@ -51,6 +53,11 @@ export function Arena({ G, ctx, moves, playerID }: BoardProps<G>) {
 
   const handleStamina = (action: 'probabilityLock' | 'statusOverride' | 'drawCard') => {
     moves.useStamina({ action });
+  };
+
+  const handleTraitSkill = (traitIndex: number) => {
+    if (!isMyTurn) return;
+    moves.useTraitSkill({ traitIndex });
   };
 
   // Game Over
@@ -81,6 +88,34 @@ export function Arena({ G, ctx, moves, playerID }: BoardProps<G>) {
     );
   }
 
+  // Trait Animation Phase
+  if (ctx.phase === 'traitAnimation') {
+    return <TraitRevealScreen G={G} moves={moves} />;
+  }
+
+  // Trait display helper
+  const renderTraits = (traits: G['players']['0']['traits'], label: string) => (
+    <div className="mb-2">
+      <div className="label text-[9px] uppercase tracking-widest text-on-surface/30 mb-1">{label}</div>
+      <div className="flex flex-wrap gap-1">
+        {traits.map((trait) => (
+          <div
+            key={trait.id}
+            className="label text-[9px] px-1.5 py-0.5 bg-surface-container-high border border-outline-variant/20"
+            title={isZh ? trait.descriptionZh : trait.description}
+          >
+            {isZh ? trait.nameZh : trait.name}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+
+  // Trait skill buttons (e.g., ADHD)
+  const traitSkillButtons = me.traits
+    .map((trait, i) => ({ trait, index: i }))
+    .filter(({ trait }) => trait.activeAbility);
+
   return (
     <div className="min-h-screen surface">
       {/* Top bar */}
@@ -92,6 +127,25 @@ export function Arena({ G, ctx, moves, playerID }: BoardProps<G>) {
           <span className="label text-xs text-on-surface/40 uppercase">
             {t('round.semester')} {G.round}
           </span>
+          {/* Undo / Redo */}
+          {undo && (
+            <button
+              onClick={() => undo()}
+              className="label text-xs uppercase tracking-wider text-on-surface/50 hover:text-on-surface transition-colors"
+              title={t('game.undo')}
+            >
+              ↶ {t('game.undo')}
+            </button>
+          )}
+          {redo && (
+            <button
+              onClick={() => redo()}
+              className="label text-xs uppercase tracking-wider text-on-surface/50 hover:text-on-surface transition-colors"
+              title={t('game.redo')}
+            >
+              ↷ {t('game.redo')}
+            </button>
+          )}
           <button
             onClick={toggleLang}
             className="label text-xs uppercase tracking-wider text-on-surface/50 hover:text-on-surface transition-colors"
@@ -106,6 +160,7 @@ export function Arena({ G, ctx, moves, playerID }: BoardProps<G>) {
         <div className="flex-1 p-6">
           {/* Opponent area */}
           <div className="mb-6">
+            {renderTraits(opp.traits, t('trait.opponentTraits'))}
             <div className="flex items-center justify-between mb-2">
               <h2 className="label text-xs font-bold uppercase tracking-widest text-on-surface/40">
                 {t('game.opponentField')}
@@ -125,6 +180,16 @@ export function Arena({ G, ctx, moves, playerID }: BoardProps<G>) {
                 <div className="label text-sm font-bold">
                   {t('game.score')}: {opp.score.total}
                 </div>
+                {opp.probabilityLockActive && (
+                  <span className="label text-[9px] px-1.5 py-0.5 bg-primary/10 text-primary font-bold uppercase">
+                    {t('stamina.probabilityLock')} ✓
+                  </span>
+                )}
+                {opp.statusOverrideActive && (
+                  <span className="label text-[9px] px-1.5 py-0.5 bg-primary/10 text-primary font-bold uppercase">
+                    {t('stamina.statusOverride')} ✓
+                  </span>
+                )}
               </div>
             </div>
             <div className="grid grid-cols-3 gap-1">
@@ -168,6 +233,7 @@ export function Arena({ G, ctx, moves, playerID }: BoardProps<G>) {
 
           {/* Player area */}
           <div>
+            {renderTraits(me.traits, t('trait.yourTraits'))}
             <div className="flex items-center justify-between mb-2">
               <h2 className="label text-xs font-bold uppercase tracking-widest text-on-surface/60">
                 {t('game.yourField')}
@@ -187,6 +253,16 @@ export function Arena({ G, ctx, moves, playerID }: BoardProps<G>) {
                 <div className="label text-sm font-bold">
                   {t('game.score')}: {me.score.total}
                 </div>
+                {me.probabilityLockActive && (
+                  <span className="label text-[9px] px-1.5 py-0.5 bg-primary/10 text-primary font-bold uppercase">
+                    {t('stamina.probabilityLock')} ✓
+                  </span>
+                )}
+                {me.statusOverrideActive && (
+                  <span className="label text-[9px] px-1.5 py-0.5 bg-primary/10 text-primary font-bold uppercase">
+                    {t('stamina.statusOverride')} ✓
+                  </span>
+                )}
               </div>
             </div>
             <div className="grid grid-cols-3 gap-1">
@@ -223,7 +299,7 @@ export function Arena({ G, ctx, moves, playerID }: BoardProps<G>) {
             </div>
 
             {/* Actions */}
-            <div className="mt-3 flex items-center gap-3">
+            <div className="mt-3 flex items-center gap-3 flex-wrap">
               <button
                 onClick={handlePass}
                 disabled={!isMyTurn || me.passed}
@@ -245,6 +321,33 @@ export function Arena({ G, ctx, moves, playerID }: BoardProps<G>) {
                 </button>
               )}
 
+              {/* Trait skill buttons */}
+              {traitSkillButtons.map(({ trait, index }) => {
+                const uses = me.traitUses[trait.id] || 0;
+                const limit = trait.limitPerRound || 1;
+                const disabled = !isMyTurn || uses >= limit;
+                return (
+                  <button
+                    key={trait.id}
+                    onClick={() => handleTraitSkill(index)}
+                    disabled={disabled}
+                    className={cn(
+                      'label text-[10px] uppercase tracking-wider px-3 py-2',
+                      'border border-outline-variant/30',
+                      !disabled
+                        ? 'bg-surface hover:bg-surface-dim text-on-surface cursor-pointer'
+                        : 'bg-surface-dim text-on-surface/30 cursor-not-allowed'
+                    )}
+                    title={isZh ? trait.descriptionZh : trait.description}
+                  >
+                    <div className="font-bold">{isZh ? trait.nameZh : trait.name}</div>
+                    <div className="text-on-surface/40 mt-0.5">
+                      {uses}/{limit}
+                    </div>
+                  </button>
+                );
+              })}
+
               <div className="ml-auto">
                 <StaminaAction
                   stamina={me.stamina}
@@ -264,6 +367,155 @@ export function Arena({ G, ctx, moves, playerID }: BoardProps<G>) {
         {/* Sidebar: Game log */}
         <div className="w-64 border-l border-outline-variant/10 p-3">
           <GameLog log={G.log} />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// =============================================================================
+// TraitRevealScreen — Slot-machine style trait reveal animation
+// =============================================================================
+interface TraitRevealProps {
+  G: G;
+  moves: Record<string, (...args: unknown[]) => void>;
+}
+
+function TraitRevealScreen({ G, moves }: TraitRevealProps) {
+  const { t, i18n } = useTranslation();
+  const isZh = i18n.language === 'zh';
+  const [lang, setLang] = useState(i18n.language);
+  const [revealedCount, setRevealedCount] = useState(0);
+  const [showContinue, setShowContinue] = useState(false);
+
+  const toggleLang = () => {
+    const next = lang === 'en' ? 'zh' : 'en';
+    i18n.changeLanguage(next);
+    setLang(next);
+  };
+
+  const p0Traits = G.players['0'].traits;
+  const p1Traits = G.players['1'].traits;
+  const categoryLabels = [
+    { key: 'background', label: t('trait.background') },
+    { key: 'physiological', label: t('trait.physiological') },
+    { key: 'psychological', label: t('trait.psychological') },
+  ];
+
+  useEffect(() => {
+    const totalTraits = 6; // 3 per player
+    if (revealedCount < totalTraits) {
+      const timer = setTimeout(() => setRevealedCount(revealedCount + 1), 600);
+      return () => clearTimeout(timer);
+    } else {
+      const timer = setTimeout(() => setShowContinue(true), 400);
+      return () => clearTimeout(timer);
+    }
+  }, [revealedCount]);
+
+  return (
+    <div className="min-h-screen surface flex flex-col">
+      {/* Top bar */}
+      <div className="flex items-center justify-between px-6 py-3 surface-high border-b border-outline-variant/10">
+        <h1 className="font-display text-xl font-black uppercase tracking-tighter">
+          {t('app.title')}
+        </h1>
+        <button
+          onClick={toggleLang}
+          className="label text-xs uppercase tracking-wider text-on-surface/50 hover:text-on-surface transition-colors"
+        >
+          {lang === 'en' ? '中文' : 'EN'}
+        </button>
+      </div>
+
+      <div className="flex-1 flex flex-col items-center justify-center p-8">
+        <h2 className="font-display text-4xl md:text-6xl font-black uppercase tracking-tighter text-on-surface mb-2">
+          {t('trait.assigning')}
+        </h2>
+        <p className="label text-sm text-on-surface/40 uppercase tracking-[0.2em] mb-12">
+          {t('trait.noChoice')}
+        </p>
+
+        <div className="flex gap-16 w-full max-w-4xl">
+          {/* Player 1 Traits */}
+          <div className="flex-1">
+            <h3 className="label text-xs font-bold uppercase tracking-widest text-on-surface/60 mb-4">
+              {t('trait.yourTraits')} (P1)
+            </h3>
+            <div className="space-y-3">
+              {categoryLabels.map((cat, i) => {
+                const trait = p0Traits[i];
+                const revealed = revealedCount > i * 2;
+                const name = isZh ? trait.nameZh : trait.name;
+                const desc = isZh ? trait.descriptionZh : trait.description;
+                return (
+                  <div
+                    key={cat.key}
+                    className={cn(
+                      'transition-all duration-500',
+                      revealed ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-8'
+                    )}
+                  >
+                    <div className="label text-[9px] uppercase tracking-widest text-on-surface/30 mb-1">
+                      {cat.label}
+                    </div>
+                    <div className="surface-lowest ghost-border p-3">
+                      <div className="font-bold text-sm">{name}</div>
+                      <div className="text-[11px] text-on-surface/60 mt-1">{desc}</div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Divider */}
+          <div className="w-px bg-outline-variant/20" />
+
+          {/* Player 2 Traits */}
+          <div className="flex-1">
+            <h3 className="label text-xs font-bold uppercase tracking-widest text-on-surface/40 mb-4">
+              {t('trait.opponentTraits')} (P2)
+            </h3>
+            <div className="space-y-3">
+              {categoryLabels.map((cat, i) => {
+                const trait = p1Traits[i];
+                const revealed = revealedCount > i * 2 + 1;
+                const name = isZh ? trait.nameZh : trait.name;
+                const desc = isZh ? trait.descriptionZh : trait.description;
+                return (
+                  <div
+                    key={cat.key}
+                    className={cn(
+                      'transition-all duration-500',
+                      revealed ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-8'
+                    )}
+                  >
+                    <div className="label text-[9px] uppercase tracking-widest text-on-surface/30 mb-1">
+                      {cat.label}
+                    </div>
+                    <div className="surface-lowest ghost-border p-3">
+                      <div className="font-bold text-sm">{name}</div>
+                      <div className="text-[11px] text-on-surface/60 mt-1">{desc}</div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+
+        {/* Continue button */}
+        <div className={cn(
+          'mt-12 transition-all duration-500',
+          showContinue ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4 pointer-events-none'
+        )}>
+          <button
+            onClick={() => moves.confirmTraits()}
+            className="bg-primary text-on-primary label text-sm uppercase tracking-[0.2em] px-12 py-4 font-bold hover:bg-primary-container transition-colors"
+          >
+            {t('trait.continue')}
+          </button>
         </div>
       </div>
     </div>
