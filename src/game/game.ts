@@ -3,7 +3,7 @@
 // =============================================================================
 
 import { INVALID_MOVE, TurnOrder } from 'boardgame.io/core';
-import type { Game, Move, FnContext } from 'boardgame.io';
+import type { Game, FnContext } from 'boardgame.io';
 import {
   cardLibrary,
   traitLibrary,
@@ -68,9 +68,18 @@ function initStamina(traits: TraitDefinition[]): number {
   return Math.max(3, Math.min(8, Math.round(8 - w)));
 }
 
+function hasTrait(p: G['players']['0'], passiveEffect: string): boolean {
+  return p.traits.some((t) => t.passiveEffect === passiveEffect);
+}
+
+function hasTraitWithChance(p: G['players']['0'], passiveEffect: string, chance: number): boolean {
+  return p.traits.some((t) => t.passiveEffect === passiveEffect && t.chance && Math.random() < t.chance);
+}
+
 function calcScore(G: G, playerIdx: number): void {
   const pKey = String(playerIdx) as '0' | '1';
   const p = G.players[pKey];
+  const negateNegatives = p.statusOverrideActive;
   let total = 0;
   const fields: FieldName[] = ['Presentations', 'Assignments', 'Exams'];
 
@@ -82,6 +91,8 @@ function calcScore(G: G, playerIdx: number): void {
     for (const trait of p.traits) {
       if (trait.passiveField === field && trait.passiveValue) {
         if (trait.passiveValue < 0) {
+          // Negative trait: skip if status override is active
+          if (negateNegatives) continue;
           for (const c of p.field[field]) {
             if ((c.credits[field] || 0) > 0) score += trait.passiveValue;
           }
@@ -104,6 +115,8 @@ function addLog(G: G, player: number, action: string, detail: string): void {
 function checkSynergy(G: G, pKey: '0' | '1', fieldName: string): void {
   const p = G.players[pKey];
   const field = p.field[fieldName as FieldName];
+  const lockActive = p.probabilityLockActive;
+
   for (let i = 0; i < field.length - 1; i++) {
     const c1 = field[i];
     const c2 = field[i + 1];
@@ -116,7 +129,16 @@ function checkSynergy(G: G, pKey: '0' | '1', fieldName: string): void {
     ) {
       c1.synergyActivated = true;
       c2.synergyActivated = true;
-      if (Math.random() < 0.5) {
+
+      // Probability Lock guarantees success
+      const success = lockActive || Math.random() < 0.5;
+
+      if (lockActive) {
+        addLog(G, Number(pKey), 'stamina', 'Probability Lock: synergy guaranteed!');
+        p.probabilityLockActive = false;
+      }
+
+      if (success) {
         const f = fieldName as FieldName;
         (c1.credits as Record<FieldName, number>)[f] = (c1.credits[f] || 0) * 2;
         (c2.credits as Record<FieldName, number>)[f] = (c2.credits[f] || 0) * 2;
@@ -181,6 +203,8 @@ function endRound(G: G): void {
     }
     p.passed = false;
     p.traitUses = {};
+    p.probabilityLockActive = false;
+    p.statusOverrideActive = false;
   }
   calcScore(G, 0);
   calcScore(G, 1);
@@ -188,7 +212,10 @@ function endRound(G: G): void {
 
 // ---- Moves ----
 
-const playCard: Move<G> = ({ G, ctx, playerID }, { handIndex, fieldName }: PlayCardParams) => {
+const playCard = (
+  { G, ctx, playerID }: FnContext<G>,
+  { handIndex, fieldName }: PlayCardParams
+) => {
   const pKey = playerID as '0' | '1';
   const p = G.players[pKey];
 
@@ -197,6 +224,22 @@ const playCard: Move<G> = ({ G, ctx, playerID }, { handIndex, fieldName }: PlayC
   p.field[fieldName].push(card);
 
   addLog(G, Number(pKey), 'play', `Played ${card.name} to ${fieldName}`);
+
+  // Check if opponent has Calm Mind and can negate this Event
+  if (card.type === 'Event') {
+    const oppKey = pKey === '0' ? '1' : '0';
+    const opp = G.players[oppKey];
+    if (hasTraitWithChance(opp, 'negateEvent', 0.5)) {
+      // Event negated — remove it, don't apply effects
+      const idx = p.field[fieldName].indexOf(card);
+      if (idx !== -1) p.field[fieldName].splice(idx, 1);
+      p.discard.push(card);
+      addLog(G, Number(oppKey), 'trait', 'Calm Mind: negated opponent event!');
+      calcScore(G, 0);
+      calcScore(G, 1);
+      return;
+    }
+  }
 
   if (card.deployEffect === 'drawCard') {
     const count = card.effectValue || 1;
@@ -237,7 +280,7 @@ const playCard: Move<G> = ({ G, ctx, playerID }, { handIndex, fieldName }: PlayC
   calcScore(G, 1);
 };
 
-const pass: Move<G> = ({ G, playerID }) => {
+const pass = ({ G, playerID }: FnContext<G>) => {
   const pKey = playerID as '0' | '1';
   G.players[pKey].passed = true;
   addLog(G, Number(pKey), 'pass', 'Passed turn');
@@ -248,7 +291,7 @@ const pass: Move<G> = ({ G, playerID }) => {
   }
 };
 
-const useStamina: Move<G> = ({ G, playerID }, { action }: StaminaActionParams) => {
+const useStamina = ({ G, playerID }: FnContext<G>, { action }: StaminaActionParams) => {
   const pKey = playerID as '0' | '1';
   const p = G.players[pKey];
 
@@ -256,12 +299,14 @@ const useStamina: Move<G> = ({ G, playerID }, { action }: StaminaActionParams) =
     case 'probabilityLock':
       if (p.stamina < 2) return INVALID_MOVE;
       p.stamina -= 2;
-      addLog(G, Number(pKey), 'stamina', 'Probability Lock (2 Stamina)');
+      p.probabilityLockActive = true;
+      addLog(G, Number(pKey), 'stamina', 'Probability Lock (2 Stamina) — synergy guaranteed!');
       break;
     case 'statusOverride':
       if (p.stamina < 1) return INVALID_MOVE;
       p.stamina -= 1;
-      addLog(G, Number(pKey), 'stamina', 'Status Override (1 Stamina)');
+      p.statusOverrideActive = true;
+      addLog(G, Number(pKey), 'stamina', 'Status Override (1 Stamina) — negative traits negated');
       break;
     case 'drawCard':
       if (p.stamina < 3 || p.deck.length === 0) return INVALID_MOVE;
@@ -272,7 +317,7 @@ const useStamina: Move<G> = ({ G, playerID }, { action }: StaminaActionParams) =
   }
 };
 
-const useTraitSkill: Move<G> = ({ G, playerID }, { traitIndex }: { traitIndex: number }) => {
+const useTraitSkill = ({ G, playerID }: FnContext<G>, { traitIndex }: { traitIndex: number }) => {
   const pKey = playerID as '0' | '1';
   const p = G.players[pKey];
   const trait = p.traits[traitIndex];
@@ -293,9 +338,19 @@ const useTraitSkill: Move<G> = ({ G, playerID }, { traitIndex }: { traitIndex: n
   }
 };
 
-const confirmTraits: Move<G> = ({ G }) => {
+const confirmTraits = ({ G }: FnContext<G>) => {
   G.traitAnimationDone = true;
 };
+
+// ---- Determine first player from traits ----
+function determineFirstPlayer(trait0: TraitDefinition[], trait1: TraitDefinition[]): '0' | '1' {
+  const p0hasOpponentStarts = trait0.some((t) => t.passiveEffect === 'opponentStarts');
+  const p1hasOpponentStarts = trait1.some((t) => t.passiveEffect === 'opponentStarts');
+
+  if (p0hasOpponentStarts && !p1hasOpponentStarts) return '1'; // P0's opponent goes first
+  if (p1hasOpponentStarts && !p0hasOpponentStarts) return '0'; // P1's opponent goes first
+  return '0'; // default
+}
 
 // ---- Game definition ----
 
@@ -305,6 +360,7 @@ export const AcademiaArena: Game<G> = {
   setup: () => {
     const trait0 = assignTraits();
     const trait1 = assignTraits();
+    const firstPlayer = determineFirstPlayer(trait0, trait1);
 
     const makePlayer = (traits: TraitDefinition[]) => ({
       deck: createDeck(),
@@ -317,6 +373,8 @@ export const AcademiaArena: Game<G> = {
       stamina: initStamina(traits),
       traits,
       traitUses: {} as Record<string, number>,
+      probabilityLockActive: false,
+      statusOverrideActive: false,
     });
 
     const players = { '0': makePlayer(trait0), '1': makePlayer(trait1) };
@@ -329,7 +387,7 @@ export const AcademiaArena: Game<G> = {
       }
     }
 
-    return { players, round: 1, currentPlayer: 0, log: [], traitAnimationDone: false };
+    return { players, round: 1, currentPlayer: Number(firstPlayer), log: [], traitAnimationDone: false, firstPlayer };
   },
 
   phases: {
@@ -341,10 +399,15 @@ export const AcademiaArena: Game<G> = {
     },
     main: {
       turn: {
-        order: TurnOrder.DEFAULT,
+        order: {
+          first: ({ G }) => Number(G.firstPlayer),
+          next: ({ ctx }) => (ctx.playOrderPos + 1) % ctx.numPlayers,
+        },
         onBegin: ({ G, playerID }) => {
           const pKey = playerID as '0' | '1';
           G.players[pKey].passed = false;
+          // Reset status override at start of each turn
+          G.players[pKey].statusOverrideActive = false;
           for (const t of G.players[pKey].traits) {
             if (t.passiveEffect === 'drawOnTurnStart' && G.players[pKey].deck.length > 0) {
               G.players[pKey].hand.push(G.players[pKey].deck.pop()!);
@@ -361,7 +424,12 @@ export const AcademiaArena: Game<G> = {
     if (G.players['1'].roundsWon >= 2) return { winner: '1' };
   },
 
-  moves: { playCard, pass, useStamina, useTraitSkill },
+  moves: {
+    playCard: { move: playCard, undoable: true },
+    pass: { move: pass, undoable: true },
+    useStamina: { move: useStamina, undoable: true },
+    useTraitSkill: { move: useTraitSkill, undoable: true },
+  },
 
   ai: {
     enumerate: (_G: G, _ctx: unknown, playerID: string) => {
@@ -375,8 +443,8 @@ export const AcademiaArena: Game<G> = {
         }
       }
       moves.push({ move: 'pass' });
-      if (p.stamina >= 2) moves.push({ move: 'useStamina', args: [{ action: 'probabilityLock' }] });
-      if (p.stamina >= 1) moves.push({ move: 'useStamina', args: [{ action: 'statusOverride' }] });
+      if (p.stamina >= 2 && !p.probabilityLockActive) moves.push({ move: 'useStamina', args: [{ action: 'probabilityLock' }] });
+      if (p.stamina >= 1 && !p.statusOverrideActive) moves.push({ move: 'useStamina', args: [{ action: 'statusOverride' }] });
       if (p.stamina >= 3 && p.deck.length > 0) moves.push({ move: 'useStamina', args: [{ action: 'drawCard' }] });
       for (let i = 0; i < p.traits.length; i++) {
         const t = p.traits[i];

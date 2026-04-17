@@ -21,6 +21,8 @@ export interface PlayerState {
   stamina: number;
   traits: TraitDefinition[];
   traitUses: Record<string, number>;
+  probabilityLockActive: boolean;
+  statusOverrideActive: boolean;
 }
 
 export interface GameLogEntry {
@@ -37,6 +39,7 @@ export interface G {
   currentPlayer: number;
   log: GameLogEntry[];
   traitAnimationDone: boolean;
+  firstPlayer: '0' | '1';
 }
 
 // Move parameter types
