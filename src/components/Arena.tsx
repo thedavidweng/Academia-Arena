@@ -119,7 +119,7 @@ export function Arena({ G, ctx, moves, playerID, undo, redo }: BoardProps<G> & {
   return (
     <div className="min-h-screen surface">
       {/* Top bar */}
-      <div className="flex items-center justify-between px-6 py-3 surface-high border-b border-outline-variant/10">
+      <div className="flex items-center justify-between px-6 py-3 surface-high">
         <h1 className="font-display text-xl font-black uppercase tracking-tighter">
           {t('app.title')}
         </h1>
@@ -215,7 +215,7 @@ export function Arena({ G, ctx, moves, playerID, undo, redo }: BoardProps<G> & {
             </div>
           </div>
 
-          <div className="my-4 border-t-2 border-on-surface/10" />
+          <div className="my-4 bg-surface-container-low h-2" />
 
           {/* Turn indicator */}
           <div className="text-center mb-4">
@@ -416,7 +416,7 @@ function TraitRevealScreen({ G, moves }: TraitRevealProps) {
   return (
     <div className="min-h-screen surface flex flex-col">
       {/* Top bar */}
-      <div className="flex items-center justify-between px-6 py-3 surface-high border-b border-outline-variant/10">
+      <div className="flex items-center justify-between px-6 py-3 surface-high">
         <h1 className="font-display text-xl font-black uppercase tracking-tighter">
           {t('app.title')}
         </h1>
