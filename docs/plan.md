@@ -46,8 +46,8 @@ Implement the core rulebook within the boardgame.io setup:
    npm create vite@latest ./ -- --template react-ts
    
    # Install Dependencies
-   npm install boardgame.io lucide-react clsx tailwind-merge
-   npm install -D tailwindcss postcss autoprefixer
+   pnpm add boardgame.io lucide-react clsx tailwind-merge
+   pnpm add -D tailwindcss postcss autoprefixer
    npx tailwindcss init -p
    
    # Initialize shadcn/ui (Use default prompts)
