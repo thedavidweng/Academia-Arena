@@ -41,9 +41,10 @@ jobs:
         run: |
           set -euo pipefail
           # Release/review tooling stays manual.
-          deny='googleapis/release-please-action dependabot/fetch-metadata jdx/jactionlint'
+          deny='googleapis/release-please-action dependabot/fetch-metadata jdx/jactionlint github/codeql-action zizmorcore/zizmor-action actions/dependency-review-action trufflesecurity/trufflehog'
+          dep_names="${DEP_NAMES// /}"
           for blocked in $deny; do
-            case ",${DEP_NAMES}," in
+            case ",${dep_names}," in
               *",${blocked},"*)
                 echo "skip auto-merge (denylist): $blocked"
                 exit 0
@@ -67,7 +68,7 @@ jobs:
           fi
           # github-actions non-major: auto (covers SHA pin bumps with empty update-type)
           if [ "$eco" = "github-actions" ] || [ "$eco" = "github_actions" ]; then
-            if [ "$ut" != "version-update:semver-major" ]; then
+            if [ "$ut" = "version-update:semver-patch" ] || [ "$ut" = "version-update:semver-minor" ]; then
               eligible=true
             fi
           fi
