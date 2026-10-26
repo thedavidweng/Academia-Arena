@@ -323,6 +323,27 @@ describe('trait and stamina boundaries', () => {
     expect(G.log.some(e => e.detail === 'log.negate')).toBe(true);
   });
 
+  it('blocks undo when an opponent negate trait rolled and did not fire', () => {
+    // chance 0 forces the non-negated outcome, but the roll is still consumed
+    const c = match(G => {
+      G.players['1'].traits = [{ ...trait('trait_calm'), chance: 0 }];
+      G.players['0'].hand = [card('event_allnighter', 'ev')];
+      G.players['0'].field.Exams = [card('nerd1', 'x')];
+    });
+    c.moves.playCard({ handIndex: 0, fieldName: 'Exams' });
+    const played = c.getState()!.G.players['0'];
+    expect(played.revealedThisTurn).toBe(true);
+    expect(played.playedThisTurn).toBe(true);
+    c.undo();
+    const after = c.getState()!.G.players['0'];
+    expect(after.revealedThisTurn).toBe(true);
+    expect(after.playedThisTurn).toBe(true);
+    expect(after.hand.map(x => x.instanceId)).toEqual([]);
+    expect(after.discard.map(x => x.id)).toEqual(['event_allnighter']);
+    // nerd1 has 5 Exams credits and All-Nighter added 1.
+    expect(after.field.Exams[0].credits.Exams).toBe(6);
+  });
+
   it('removes the opponent synergy card from a lane other than the one played into', () => {
     const c = match(G => {
       G.players['0'].hand = [card('event_conflict', 'conflict')];

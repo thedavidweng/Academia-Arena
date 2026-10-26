@@ -131,9 +131,12 @@ const playCard = ({ G, playerID, random }: FnContext<G>, { handIndex, fieldName 
   const other = G.players[opponent(key)];
   if (card.type === 'Event') {
     p.discard.push(card);
-    const negate = other.traits.some(t => t.passiveEffect === 'negateEvent' && random.Number() < t.chance!);
+    const ward = other.traits.find(t => t.passiveEffect === 'negateEvent');
+    // The roll is consumed either way, so both outcomes reveal a random value:
+    // a non-firing negate still tells the player the next draw in the sequence.
+    const negate = ward ? random.Number() < ward.chance! : false;
+    if (ward) p.revealedThisTurn = true;
     if (negate) {
-      p.revealedThisTurn = true;
       addLog(G, Number(opponent(key)), 'trait', 'log.negate');
       return;
     }
