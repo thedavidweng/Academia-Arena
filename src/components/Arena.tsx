@@ -19,12 +19,14 @@ export function Arena(props: ArenaProps) {
   const [selected, setSelected] = useState<number | null>(null);
   const [ready, setReady] = useState(false);
   const [undone, setUndone] = useState(0);
+  const [undoable, setUndoable] = useState(true);
   const [history, setHistory] = useState<{ G: G; ctx: typeof liveCtx }[]>([]);
   const [review, setReview] = useState(-1);
   useEffect(() => {
     setSelected(null);
     setReady(false);
     setUndone(0);
+    setUndoable(true);
     if (hotseat) onPlayerChange?.(liveCtx.currentPlayer);
   }, [liveCtx.turn, liveCtx.currentPlayer, hotseat, onPlayerChange]);
   useEffect(() => {
@@ -110,7 +112,7 @@ export function Arena(props: ArenaProps) {
       </select>
       {review >= 0 && <strong role="status">{t('game.reviewOnly')}</strong>}
       <button onClick={() => { undo(); setUndone(u => u + 1); setSelected(null); }}
-        disabled={!isMyTurn || liveCtx.numMoves === 0}>{t('game.undo')}</button>
+        disabled={!isMyTurn || liveCtx.numMoves === 0 || !undoable}>{t('game.undo')}</button>
       <button onClick={() => { redo(); setUndone(u => Math.max(0, u - 1)); setSelected(null); }}
         disabled={!isMyTurn || undone === 0}>{t('game.redo')}</button>
     </div>
@@ -161,12 +163,12 @@ export function Arena(props: ArenaProps) {
             {me.traits.map((trait, index) => trait.activeAbility && <button key={trait.id}
               className="surface-high px-3 py-2 disabled:opacity-40"
               disabled={!isMyTurn || !me.hand.length || (me.traitUses[trait.id] || 0) >= trait.limitPerRound!}
-              onClick={() => { moves.useTraitSkill({ traitIndex: index }); setSelected(null); }}>
+              onClick={() => { moves.useTraitSkill({ traitIndex: index }); setUndoable(false); setSelected(null); }}>
               {isZh ? trait.nameZh : trait.name} ({me.traitUses[trait.id] || 0}/{trait.limitPerRound})
             </button>)}
             <StaminaAction stamina={me.stamina} disabled={!isMyTurn} lockActive={me.probabilityLockActive}
               overrideActive={me.statusOverrideActive} deckEmpty={!me.deck.length}
-              onAction={action => { moves.useStamina({ action }); setSelected(null); }} />
+              onAction={action => { moves.useStamina({ action }); setUndoable(false); setSelected(null); }} />
           </div>
           <p className="mt-3 label text-xs">{t('game.deck')}: {me.deck.length} · {t('game.discard')}: {me.discard.length}</p>
         </section>
