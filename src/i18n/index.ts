@@ -10,7 +10,14 @@ i18n.use(initReactI18next).init({
   },
   lng: 'en',
   fallbackLng: 'en',
+  keySeparator: false,
   interpolation: { escapeValue: false },
+});
+
+i18n.on('languageChanged', language => {
+  if (typeof document !== 'undefined') {
+    document.documentElement.lang = language === 'zh' ? 'zh-CN' : 'en';
+  }
 });
 
 export default i18n;

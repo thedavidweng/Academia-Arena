@@ -21,6 +21,12 @@ export function Card({ card, selected, onClick, compact }: CardProps) {
   return (
     <div
       onClick={onClick}
+      role={onClick ? 'button' : undefined}
+      tabIndex={onClick ? 0 : undefined}
+      aria-pressed={onClick ? !!selected : undefined}
+      onKeyDown={event => {
+        if (onClick && (event.key === 'Enter' || event.key === ' ')) { event.preventDefault(); onClick(); }
+      }}
       className={cn(
         'game-card surface-lowest ghost-border p-3 cursor-pointer select-none',
         'flex flex-col justify-between',
@@ -60,12 +66,12 @@ export function Card({ card, selected, onClick, compact }: CardProps) {
       <div className="mt-auto space-y-0.5">
         {card.deployEffect && (
           <div className="label text-[9px] text-primary font-medium uppercase">
-            {t('card.deploy')}: {card.deployEffect}
+            {t('card.deploy')}: {t(`effect.${card.deployEffect}`)}
           </div>
         )}
         {card.synergy && (
           <div className="label text-[9px] text-on-surface/50 font-medium uppercase">
-            {t('card.synergy')}: {t(`synergy.${card.synergy.type.toLowerCase().replace(/\s/g, '')}`, card.synergy.type)}
+            {t('card.synergy')}: {t('synergy.essayGhostwriting')}
           </div>
         )}
         {card.stayOnField && (

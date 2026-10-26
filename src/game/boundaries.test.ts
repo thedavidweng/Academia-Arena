@@ -1,0 +1,307 @@
+import { describe, expect, it } from 'vitest';
+import { Client } from 'boardgame.io/client';
+import { Local } from 'boardgame.io/multiplayer';
+import { RandomBot } from 'boardgame.io/ai';
+import type { Game } from 'boardgame.io';
+import { AcademiaArena } from './game';
+import { cardLibrary, traitLibrary, type TraitDefinition } from '../data/entities';
+import type { G } from './types';
+
+const card = (id: string, instanceId: string) => ({
+  ...structuredClone(cardLibrary.find(c => c.id === id)!), instanceId,
+});
+const trait = (id: string): TraitDefinition =>
+  Object.values(traitLibrary).flat().find(t => t.id === id)!;
+
+function match(change: (G: G) => void = () => {}) {
+  const game: Game<G> = {
+    ...AcademiaArena,
+    seed: 'boundaries',
+    setup: context => {
+      const G = AcademiaArena.setup!(context, undefined);
+      G.firstPlayer = '0';
+      for (const p of Object.values(G.players)) {
+        p.traits = [];
+        p.stamina = 8;
+        p.deck = [card('nerd1', 'deck0'), card('nerd1', 'deck1')];
+        p.hand = [card('gymbro1', 'a'), card('richkid1', 'b'), card('richkid1', 'c'),
+          card('studious1', 'd'), card('dropout1', 'e')];
+      }
+      change(G);
+      return G;
+    },
+  };
+  const client = Client({ game, debug: false });
+  client.start();
+  client.moves.confirmTraits();
+  return client;
+}
+
+const settle = () => new Promise(resolve => setTimeout(resolve, 25));
+
+describe('first player and semester boundaries', () => {
+  it('gives the first turn to the opponent of a Physically Impaired player', () => {
+    const c = match(G => {
+      G.players['0'].traits = [trait('trait_impaired')];
+      G.firstPlayer = '1';
+    });
+    expect(c.getState()!.ctx.currentPlayer).toBe('1');
+  });
+
+  it('does not let both Physically Impaired players cancel each other out', () => {
+    const c = match(G => {
+      G.players['0'].traits = [trait('trait_impaired')];
+      G.players['1'].traits = [trait('trait_impaired')];
+      G.firstPlayer = '0';
+    });
+    expect(c.getState()!.ctx.currentPlayer).toBe('0');
+  });
+
+  it('starts the next semester with the player who lost it', () => {
+    const c = match();
+    c.moves.playCard({ handIndex: 4, fieldName: 'Presentations' });
+    c.moves.finishTurn();
+    c.moves.pass();
+    c.moves.playCard({ handIndex: 3, fieldName: 'Exams' });
+    c.moves.finishTurn();
+    const G = c.getState()!.G;
+    expect(G.round).toBe(2);
+    expect(G.players['0'].roundsWon).toBe(1);
+    expect(G.firstPlayer).toBe('1');
+    expect(c.getState()!.ctx.currentPlayer).toBe('1');
+  });
+
+  it('ends the semester when the last active player commits after a pass', () => {
+    const c = match();
+    c.moves.pass();
+    c.moves.playCard({ handIndex: 4, fieldName: 'Presentations' });
+    c.moves.finishTurn();
+    const G = c.getState()!.G;
+    expect(G.round).toBe(2);
+    expect(G.players['1'].roundsWon).toBe(1);
+    expect(G.players['0'].roundsWon).toBe(0);
+    expect(G.players['1'].playedThisTurn).toBe(false);
+    expect(c.getState()!.ctx.currentPlayer).toBe('0');
+  });
+
+  it('keeps a Stay on Field card across semesters and clears its synergy flag', () => {
+    const c = match(G => {
+      G.players['0'].hand = [card('dropout1', 'stay'), card('richkid1', 'x'), card('richkid1', 'y')];
+    });
+    c.moves.playCard({ handIndex: 0, fieldName: 'Exams' });
+    c.moves.finishTurn();
+    c.moves.pass();
+    c.moves.pass();
+    const G = c.getState()!.G;
+    expect(G.round).toBe(2);
+    expect(G.players['0'].field.Exams.map(x => x.id)).toEqual(['dropout1']);
+    expect(G.players['0'].field.Exams[0].synergyActivated).toBe(false);
+    expect(G.players['0'].score.Exams).toBe(1);
+  });
+
+  it('runs a full best-of-three to a winner and a draw', () => {
+    const c = match();
+    const win = (winner: '0' | '1') => {
+      const loser = winner === '0' ? '1' : '0';
+      const state = c.getState()!;
+      if (state.ctx.currentPlayer !== winner) {
+        c.moves.pass();
+        c.moves.pass();
+      }
+      c.moves.playCard({ handIndex: 0, fieldName: 'Exams' });
+      c.moves.finishTurn();
+      if (c.getState()!.ctx.currentPlayer !== loser) return;
+      c.moves.pass();
+      if (c.getState()!.ctx.currentPlayer === winner) c.moves.pass();
+    };
+    win('0');
+    win('0');
+    expect(c.getState()!.ctx.gameover).toEqual({ winner: '0' });
+  });
+});
+
+describe('trait and stamina boundaries', () => {
+  it('draws at turn start for Domestic and only for the current player', () => {
+    const c = match(G => {
+      G.players['0'].traits = [trait('trait_local')];
+      G.players['1'].traits = [trait('trait_local')];
+    });
+    expect(c.getState()!.G.players['0'].hand).toHaveLength(6);
+    expect(c.getState()!.G.players['1'].hand).toHaveLength(5);
+    c.moves.pass();
+    expect(c.getState()!.G.players['1'].hand).toHaveLength(6);
+  });
+
+  it('does not draw at turn start when the deck is empty', () => {
+    const c = match(G => {
+      G.players['0'].traits = [trait('trait_local')];
+      G.players['0'].deck = [];
+    });
+    expect(c.getState()!.G.players['0'].hand).toHaveLength(5);
+  });
+
+  it('suppresses negative Presentation credits for the rest of the semester', () => {
+    const c = match(G => {
+      G.players['0'].traits = [trait('trait_depressed')];
+      G.players['0'].hand = [card('gymbro1', 'g'), card('nerd1', 'n')];
+    });
+    c.moves.playCard({ handIndex: 0, fieldName: 'Presentations' });
+    expect(c.getState()!.G.players['0'].score.Presentations).toBe(5);
+    c.moves.finishTurn();
+    c.moves.pass();
+    expect(c.getState()!.ctx.currentPlayer).toBe('0');
+    c.moves.useStamina({ action: 'statusOverride' });
+    expect(c.getState()!.G.players['0'].score.Presentations).toBe(6);
+    expect(c.getState()!.G.players['0'].stamina).toBe(7);
+  });
+
+  it('rejects stamina the player cannot afford or has already spent', () => {
+    const c = match(G => { G.players['0'].stamina = 2; G.players['0'].deck = []; });
+    c.moves.useStamina({ action: 'drawCard' });
+    expect(c.getState()!.G.players['0'].stamina).toBe(2);
+    c.moves.useStamina({ action: 'probabilityLock' });
+    c.moves.useStamina({ action: 'probabilityLock' });
+    expect(c.getState()!.G.players['0'].stamina).toBe(0);
+    c.moves.useStamina({ action: 'statusOverride' });
+    expect(c.getState()!.G.players['0'].stamina).toBe(0);
+    expect(c.getState()!.G.players['0'].statusOverrideActive).toBe(false);
+  });
+
+  it('rejects a second card, a pass after playing, and an out-of-range trait skill', () => {
+    const c = match(G => { G.players['0'].traits = [trait('trait_adhd')]; });
+    c.moves.playCard({ handIndex: 0, fieldName: 'Exams' });
+    c.moves.playCard({ handIndex: 0, fieldName: 'Exams' });
+    expect(c.getState()!.G.players['0'].hand).toHaveLength(4);
+    c.moves.pass();
+    expect(c.getState()!.ctx.currentPlayer).toBe('0');
+    expect(c.getState()!.G.players['0'].passed).toBe(false);
+    c.moves.useTraitSkill({ traitIndex: 7 });
+    expect(c.getState()!.G.log.some(e => e.detail === 'log.adhd')).toBe(false);
+  });
+
+  it('lets ADHD discard and draw once per semester', () => {
+    const c = match(G => {
+      G.players['0'].traits = [trait('trait_adhd')];
+      G.players['0'].deck = [card('nerd1', 'd0'), card('nerd1', 'd1')];
+    });
+    c.moves.useTraitSkill({ traitIndex: 0 });
+    let G = c.getState()!.G;
+    expect(G.players['0'].hand).toHaveLength(6);
+    expect(G.players['0'].discard).toHaveLength(1);
+    expect(G.players['0'].deck).toHaveLength(0);
+    c.moves.useTraitSkill({ traitIndex: 0 });
+    G = c.getState()!.G;
+    expect(G.players['0'].hand).toHaveLength(6);
+    expect(G.players['0'].traitUses['trait_adhd']).toBe(1);
+  });
+
+  it('keeps a spent Probability Lock until the next synergy attempt', () => {
+    const c = match(G => {
+      G.players['0'].hand = [card('richkid1', 'r1'), card('richkid1', 'r2'), card('nerd1', 'n')];
+    });
+    c.moves.useStamina({ action: 'probabilityLock' });
+    c.moves.playCard({ handIndex: 0, fieldName: 'Exams' });
+    expect(c.getState()!.G.players['0'].probabilityLockActive).toBe(true);
+    c.moves.finishTurn();
+    c.moves.pass();
+    c.moves.playCard({ handIndex: 0, fieldName: 'Exams' });
+    const p = c.getState()!.G.players['0'];
+    expect(p.field.Exams.map(x => x.credits.Exams)).toEqual([2, 2]);
+    expect(p.probabilityLockActive).toBe(false);
+    expect(p.field.Exams.every(x => x.synergyActivated)).toBe(true);
+  });
+
+  it('applies the comeback bonus only to a trailing player', () => {
+    const c = match(G => {
+      G.players['1'].traits = [trait('trait_minority')];
+      G.players['0'].hand = [card('gymbro1', 'g')];
+      G.players['1'].hand = [card('nerd1', 'n')];
+    });
+    c.moves.playCard({ handIndex: 0, fieldName: 'Presentations' });
+    c.moves.finishTurn();
+    c.moves.playCard({ handIndex: 0, fieldName: 'Assignments' });
+    c.moves.finishTurn();
+    c.moves.pass();
+    c.moves.pass();
+    const G = c.getState()!.G;
+    const semester = G.log.filter(e => e.action === 'round');
+    expect(semester).toHaveLength(1);
+    expect(semester[0].values).toEqual({ player: 2, score0: 6, score1: 7 });
+    expect(G.players['1'].roundsWon).toBe(1);
+    expect(G.players['0'].roundsWon).toBe(0);
+  });
+
+  it('negates an opponent event without placing it on the field', () => {
+    const c = match(G => {
+      G.players['1'].traits = [{ ...trait('trait_calm'), chance: 1 }];
+      G.players['0'].hand = [card('event_allnighter', 'ev')];
+      G.players['0'].field.Exams = [card('nerd1', 'x')];
+    });
+    c.moves.playCard({ handIndex: 0, fieldName: 'Exams' });
+    const G = c.getState()!.G;
+    expect(G.players['0'].field.Exams[0].credits.Exams).toBe(5);
+    expect(G.players['0'].discard.map(x => x.id)).toEqual(['event_allnighter']);
+    expect(G.log.some(e => e.detail === 'log.negate')).toBe(true);
+  });
+});
+
+describe('local transport and bot integration', () => {
+  it('lets the bot play its own turns and end the match', async () => {
+    const client = Client({
+      game: { ...AcademiaArena, seed: 'bot' },
+      numPlayers: 2,
+      playerID: '0',
+      multiplayer: Local({ bots: { '1': RandomBot } }),
+    });
+    client.start();
+    await settle();
+    client.moves.confirmTraits();
+    for (let i = 0; i < 400 && client.getState()!.ctx.gameover === undefined; i++) {
+      const state = client.getState()!;
+      if (state.ctx.phase === 'main' && state.ctx.currentPlayer === '0') {
+        const G = state.G;
+        if (G.players['0'].playedThisTurn) client.moves.finishTurn();
+        else if (G.players['0'].hand.length) {
+          client.moves.playCard({ handIndex: 0, fieldName: 'Exams' });
+        } else client.moves.pass();
+      }
+      await settle();
+    }
+    const state = client.getState()!;
+    expect(state.ctx.gameover).toBeDefined();
+    expect(state.G.round).toBeGreaterThan(1);
+    expect(state.G.log.length).toBeGreaterThan(4);
+  });
+
+  it('undoes and redoes over the local transport', async () => {
+    const client = Client({
+      game: {
+        ...AcademiaArena,
+        seed: 'undo',
+        setup: context => {
+          const G = AcademiaArena.setup!(context, undefined);
+          G.firstPlayer = '0';
+          return G;
+        },
+      },
+      numPlayers: 2,
+      playerID: '0',
+      multiplayer: Local(),
+    });
+    client.start();
+    await settle();
+    client.moves.confirmTraits();
+    await settle();
+    const start = client.getState()!;
+    const hand = start.G.players['0'].hand.length;
+    client.moves.playCard({ handIndex: 0, fieldName: 'Exams' });
+    await settle();
+    expect(client.getState()!.G.players['0'].hand).toHaveLength(hand - 1);
+    client.undo();
+    await settle();
+    expect(client.getState()!.G.players['0'].hand).toHaveLength(hand);
+    client.redo();
+    await settle();
+    expect(client.getState()!.G.players['0'].hand).toHaveLength(hand - 1);
+  });
+});

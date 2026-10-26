@@ -8,9 +8,12 @@ interface StaminaActionProps {
   stamina: number;
   onAction: (action: 'probabilityLock' | 'statusOverride' | 'drawCard') => void;
   disabled?: boolean;
+  lockActive: boolean;
+  overrideActive: boolean;
+  deckEmpty: boolean;
 }
 
-export function StaminaAction({ stamina, onAction, disabled }: StaminaActionProps) {
+export function StaminaAction({ stamina, onAction, disabled, lockActive, overrideActive, deckEmpty }: StaminaActionProps) {
   const { t } = useTranslation();
 
   const actions = [
@@ -22,7 +25,8 @@ export function StaminaAction({ stamina, onAction, disabled }: StaminaActionProp
   return (
     <div className="flex gap-2">
       {actions.map(({ key, cost, label, desc }) => {
-        const canAfford = stamina >= cost;
+        const canAfford = stamina >= cost && !(key === 'probabilityLock' && lockActive)
+          && !(key === 'statusOverride' && overrideActive) && !(key === 'drawCard' && deckEmpty);
         return (
           <button
             key={key}

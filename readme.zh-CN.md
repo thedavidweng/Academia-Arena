@@ -10,10 +10,10 @@
 </div>
 
 ## 📖 游戏规则手册
-查看[游戏规则手册](assets/game-handbook.pdf)以了解详细规则和机制。
+查看[游戏规则手册](public/game-handbook.pdf)以了解详细规则和机制。
 
 ## 🧑‍🎨 设计师声明
-阅读[设计师声明](assets/designer-statement.md)以了解该游戏如何与 GMST 475 课程的框架相结合。
+阅读[设计师声明](public/designer-statement.md)以了解该游戏如何与 GMST 475 课程的框架相结合。
 
 ## 🎥 游戏介绍视频
 
@@ -86,4 +86,12 @@ Academia Arena 的核心在于跨越三个学术领域部署角色卡和事件�
 ---
 
 ## 🔧 安装与使用
-这目前是一个设计原型。你可以尝试[在线原型](https://thedavidweng.github.io/Academia-Arena/)来体验游戏玩法，但请注意游戏逻辑尚未完成，无法完全运行。
+本游戏是基于 boardgame.io 的 React + TypeScript 应用。可直接[在线游玩](https://thedavidweng.github.io/Academia-Arena/)，或在本地运行：
+
+```bash
+pnpm install --frozen-lockfile
+pnpm dev        # 开发服务器
+pnpm check      # 引擎与 i18n 测试，然后 TypeScript 检查与生产构建
+```
+
+两种模式都完全在浏览器内通过 boardgame.io 的 Local 传输运行：单人对战 AI，以及本地双人轮流操作。项目结构、规则细节与 CI 配置见 [docs/development.md](docs/development.md)。

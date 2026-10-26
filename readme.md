@@ -10,10 +10,10 @@
 </div>
 
 ## 📖 Game Rulebook
-[Check the Game Rulebook](assets/game-handbook.pdf) for detailed rules and mechanics.
+[Check the Game Rulebook](public/game-handbook.pdf) for detailed rules and mechanics.
 
 ## 🧑‍🎨 Designer Statement
-[Read the Designer Statement](assets/designer-statement.md) to see how this game engages with the frameworks of the GMST 475 course.
+[Read the Designer Statement](public/designer-statement.md) to see how this game engages with the frameworks of the GMST 475 course.
 
 ## 🎥 Game Intro Video
 
@@ -86,4 +86,15 @@ Players don’t fully redraw each round, and **remaining Stamina carries over** 
 ---
 
 ## 🔧 Installation & Usage
-This is currently a design prototype. You can try out the live prototype to experience the gameplay, but please be aware that the game logic is not complete and cannot run fully.
+The game is a React + TypeScript application built on boardgame.io. Play it online at
+<https://thedavidweng.github.io/Academia-Arena/>, or run it locally:
+
+```bash
+pnpm install --frozen-lockfile
+pnpm dev        # development server
+pnpm check      # engine and i18n tests, then TypeScript and production build
+```
+
+Both game modes run entirely in the browser over boardgame.io's Local transport:
+single player against a bot, and local two-player pass-and-play. See
+[docs/development.md](docs/development.md) for the project layout, rule details and CI setup.

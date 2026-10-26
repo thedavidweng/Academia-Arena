@@ -26,7 +26,13 @@ export function Lane({ fieldName, cards, score, droppable, onClick, isOpponent }
 
   return (
     <div
-      onClick={onClick}
+      onClick={droppable ? onClick : undefined}
+      role={droppable ? 'button' : undefined}
+      aria-label={droppable ? t('game.playTo', { field: t(`field.${fieldName}`) }) : undefined}
+      tabIndex={droppable ? 0 : undefined}
+      onKeyDown={event => {
+        if (droppable && (event.key === 'Enter' || event.key === ' ')) { event.preventDefault(); onClick?.(); }
+      }}
       className={cn(
         'min-h-[160px] p-3 flex flex-col transition-all duration-200',
         'surface-low',

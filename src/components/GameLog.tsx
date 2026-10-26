@@ -4,6 +4,7 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { GameLogEntry } from '../game/types';
+import { cardLibrary } from '../data/entities';
 import { cn } from '../lib/utils';
 
 interface GameLogProps {
@@ -11,15 +12,11 @@ interface GameLogProps {
 }
 
 export function GameLog({ log }: GameLogProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [expanded, setExpanded] = useState(false);
 
   const displayLog = expanded ? log : log.slice(-20);
-
-  const formatTime = (ts: number) => {
-    const d = new Date(ts);
-    return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-  };
+  const firstIndex = log.length - displayLog.length;
 
   const actionColor = (action: string) => {
     switch (action) {
@@ -54,13 +51,17 @@ export function GameLog({ log }: GameLogProps) {
           displayLog.map((entry, i) => (
             <div key={i} className="label text-[10px] leading-relaxed">
               <span className="text-on-surface/20">
-                {formatTime(entry.timestamp)}
+                #{firstIndex + i + 1}
               </span>{' '}
               <span className="text-on-surface/30">
-                [{entry.round}] P{entry.player + 1}
+                [{entry.round}] {entry.player >= 0 ? t('game.player', { player: entry.player + 1 }) : ''}
               </span>{' '}
               <span className={cn(actionColor(entry.action))}>
-                {entry.detail}
+                {t(entry.detail, Object.fromEntries(Object.entries(entry.values).map(([key, value]) => {
+                  const card = key === 'card' ? cardLibrary.find(c => c.id === value) : undefined;
+                  return [key, card ? (i18n.language === 'zh' ? card.nameZh : card.name)
+                    : key === 'field' ? t(`field.${value}`) : value];
+                })))}
               </span>
             </div>
           ))

@@ -18,6 +18,7 @@ export interface PlayerState {
   score: Record<FieldName, number> & { total: number };
   roundsWon: number;
   passed: boolean;
+  playedThisTurn: boolean;
   stamina: number;
   traits: TraitDefinition[];
   traitUses: Record<string, number>;
@@ -30,13 +31,12 @@ export interface GameLogEntry {
   player: number;
   action: string;
   detail: string;
-  timestamp: number;
+  values: Record<string, string | number>;
 }
 
 export interface G {
   players: Record<'0' | '1', PlayerState>;
   round: number;
-  currentPlayer: number;
   log: GameLogEntry[];
   traitAnimationDone: boolean;
   firstPlayer: '0' | '1';

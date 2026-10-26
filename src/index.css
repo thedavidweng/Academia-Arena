@@ -1,6 +1,12 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+@config "../tailwind.config.js";
+
+button, [role="button"] { cursor: pointer; }
+button:disabled { cursor: not-allowed; }
+:focus-visible { outline: 2px solid #aa301a; outline-offset: 3px; }
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+}
 
 * {
   box-sizing: border-box;
@@ -9,14 +15,14 @@
 }
 
 body {
-  font-family: 'Manrope', sans-serif;
+  font-family: 'Manrope', 'PingFang SC', 'Microsoft YaHei', sans-serif;
   background-color: #fef9f1;
   color: #1d1c17;
   min-height: 100vh;
 }
 
 h1, h2, h3, h4, h5, h6 {
-  font-family: 'Epilogue', sans-serif;
+  font-family: 'Epilogue', 'PingFang SC', 'Microsoft YaHei', sans-serif;
 }
 
 .label {
