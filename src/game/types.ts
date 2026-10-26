@@ -24,6 +24,10 @@ export interface PlayerState {
   traitUses: Record<string, number>;
   probabilityLockActive: boolean;
   statusOverrideActive: boolean;
+  /** Set when a play revealed randomness or hidden information (synergy roll,
+   *  drawn card, negated event, random removal). Cleared at turn start and
+   *  semester end; blocks undoing the play that produced the reveal. */
+  revealedThisTurn: boolean;
 }
 
 export interface GameLogEntry {

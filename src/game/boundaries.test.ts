@@ -81,6 +81,43 @@ describe('initial stamina from trait weight', () => {
   });
 });
 
+/** Drives the production `setup` with a controlled `random`, so trait
+ *  assignment (and therefore the first-player rule) is decided by the real
+ *  code path rather than injected state. `Die` results are consumed in order
+ *  by `assignTraits`: background, physiological, psychological per player. */
+function setupWithTraits(physiological: [number, number]) {
+  const dies = [0, physiological[0], 0, 0, physiological[1], 0];
+  let call = 0;
+  const random = {
+    Die: () => dies[call++ % dies.length] + 1,
+    Number: () => 0.5,
+    Shuffle: <T,>(deck: T[]) => deck,
+  };
+  return AcademiaArena.setup!({ random } as never, undefined);
+}
+
+describe('first player from the real setup', () => {
+  it('gives the first turn to the opponent of a Physically Impaired player', () => {
+    // physiological index 2 = trait_impaired, index 0 = trait_gym
+    const G = setupWithTraits([2, 0]);
+    expect(G.players['0'].traits.map(t => t.id)).toContain('trait_impaired');
+    expect(G.players['1'].traits.map(t => t.id)).not.toContain('trait_impaired');
+    expect(G.firstPlayer).toBe('1');
+  });
+
+  it('does not let both Physically Impaired players cancel each other out', () => {
+    const G = setupWithTraits([2, 2]);
+    expect(G.players['0'].traits.map(t => t.id)).toContain('trait_impaired');
+    expect(G.players['1'].traits.map(t => t.id)).toContain('trait_impaired');
+    expect(G.firstPlayer).toBe('0');
+  });
+
+  it('starts player zero when only the second player is Physically Impaired', () => {
+    const G = setupWithTraits([0, 2]);
+    expect(G.firstPlayer).toBe('0');
+  });
+});
+
 describe('first player and semester boundaries', () => {
   it('gives the first turn to the opponent of a Physically Impaired player', () => {
     const c = match(G => {
@@ -316,6 +353,53 @@ describe('trait and stamina boundaries', () => {
     c.moves.playCard({ handIndex: 0, fieldName: 'Exams' });
     c.undo();
     expect(c.getState()!.G.players['0'].hand).toHaveLength(hand);
+  });
+
+  it('blocks undo after a synergy roll so a failed pairing cannot be retried', () => {
+    const c = match(G => {
+      G.players['0'].field.Exams = [card('richkid1', 'onField')];
+      G.players['0'].hand = [card('richkid1', 'inHand'), card('gymbro1', 'other')];
+    });
+    c.moves.playCard({ handIndex: 0, fieldName: 'Exams' });
+    const played = c.getState()!.G;
+    expect(played.log.some(e => e.detail === 'log.synergyFailure'
+      || e.detail === 'log.synergySuccess')).toBe(true);
+    expect(played.players['0'].revealedThisTurn).toBe(true);
+    c.undo();
+    const after = c.getState()!.G.players['0'];
+    // The play stands: the player cannot take back a revealed synergy outcome,
+    // so the card is not back in hand whichever way the roll went.
+    expect(after.hand.map(x => x.instanceId)).toEqual(['other']);
+    expect(after.playedThisTurn).toBe(true);
+  });
+
+  it('blocks undo after drawing a card, so the peeked card stays drawn', () => {
+    const c = match(G => {
+      G.players['0'].deck = [card('nerd1', 'deck0'), card('nerd1', 'deck1')];
+      G.players['0'].hand = [card('studious1', 'studious'), card('gymbro1', 'other')];
+    });
+    const deckBefore = c.getState()!.G.players['0'].deck.length;
+    c.moves.playCard({ handIndex: 0, fieldName: 'Exams' });
+    const played = c.getState()!.G.players['0'];
+    expect(played.deck).toHaveLength(deckBefore - 1);
+    expect(played.revealedThisTurn).toBe(true);
+    c.undo();
+    const after = c.getState()!.G.players['0'];
+    expect(after.deck).toHaveLength(deckBefore - 1);
+    expect(after.hand.map(x => x.instanceId)).toContain('deck1');
+  });
+
+  it('allows undo of a plain deterministic play in the same turn', () => {
+    const c = match(G => {
+      G.players['0'].hand = [card('gymbro1', 'plain')];
+      G.players['0'].field.Exams = [];
+    });
+    c.moves.playCard({ handIndex: 0, fieldName: 'Exams' });
+    expect(c.getState()!.G.players['0'].revealedThisTurn).toBe(false);
+    c.undo();
+    const after = c.getState()!.G.players['0'];
+    expect(after.hand.map(x => x.instanceId)).toEqual(['plain']);
+    expect(after.field.Exams).toHaveLength(0);
   });
 
   it('offers the bot its stamina actions and trait skill', () => {

@@ -1,4 +1,9 @@
 
+> **Archived.** This brief was executed: the React + TypeScript rewrite is complete and
+> lives in the repository. It is kept for historical context only and is not a live
+> instruction. For how the code works today and how to change it, read
+> [development.md](development.md) and [../agents.md](../agents.md).
+
 [System Context]
 
 You are an expert game developer and software architect. Please communicate and think in Chinese (请全程使用中文进行思考和沟通). Rebuild the existing primitive prototype of "Academia Arena", a 2-player strategic browser-based card game. Read the existing prototype directory to extract the raw material: Card data (Traits, Characters, Events) and Synergy definitions.

@@ -52,14 +52,20 @@ function addLog(G: G, player: number, action: string, detail: string,
   G.log.push({ round: G.round, player, action, detail, values });
 }
 
-function checkSynergy(G: G, key: Player, fieldName: FieldName, random: Random): void {
+/** Resolves every pending synergy pair in a field. Returns true when at least
+ *  one pair actually rolled, which means the outcome depended on hidden
+ *  randomness and replaying the same move cannot change it. */
+function checkSynergy(G: G, key: Player, fieldName: FieldName, random: Random): boolean {
   const p = G.players[key];
   const field = p.field[fieldName];
+  let rolled = false;
   for (let i = 0; i < field.length - 1; i++) {
     const a = field[i], b = field[i + 1];
     if (!a.synergy || b.id !== a.synergy.partnerId || a.synergyActivated || b.synergyActivated) continue;
     a.synergyActivated = b.synergyActivated = true;
-    const success = p.probabilityLockActive || random.Number() < 0.5;
+    const locked = p.probabilityLockActive;
+    const success = locked || random.Number() < 0.5;
+    if (!locked) rolled = true;
     p.probabilityLockActive = false;
     if (success) {
       a.credits[fieldName] *= 2;
@@ -70,6 +76,7 @@ function checkSynergy(G: G, key: Player, fieldName: FieldName, random: Random): 
     addLog(G, Number(key), 'synergy', success ? 'log.synergySuccess' : 'log.synergyFailure');
     if (!success) break;
   }
+  return rolled;
 }
 
 /** Scores the semester, awards it, and starts the next one. Returns the next
@@ -105,6 +112,7 @@ function endRound(G: G): Player | null {
     p.traitUses = {};
     p.probabilityLockActive = false;
     p.statusOverrideActive = false;
+    p.revealedThisTurn = false;
   }
   const starter: Player = a > b ? '1' : '0';
   G.firstPlayer = starter;
@@ -125,6 +133,7 @@ const playCard = ({ G, playerID, random }: FnContext<G>, { handIndex, fieldName 
     p.discard.push(card);
     const negate = other.traits.some(t => t.passiveEffect === 'negateEvent' && random.Number() < t.chance!);
     if (negate) {
+      p.revealedThisTurn = true;
       addLog(G, Number(opponent(key)), 'trait', 'log.negate');
       return;
     }
@@ -134,6 +143,7 @@ const playCard = ({ G, playerID, random }: FnContext<G>, { handIndex, fieldName 
   if (card.deployEffect === 'drawCard') {
     const drawn = p.deck.splice(-Math.min(card.effectValue!, p.deck.length));
     p.hand.push(...drawn);
+    if (drawn.length) p.revealedThisTurn = true;
     addLog(G, Number(key), 'effect', 'log.draw', { count: drawn.length });
   } else if (card.deployEffect === 'boostField') {
     for (const c of p.field[fieldName]) c.credits[fieldName] += card.effectValue!;
@@ -146,12 +156,21 @@ const playCard = ({ G, playerID, random }: FnContext<G>, { handIndex, fieldName 
       const removed = candidates[random.Die(candidates.length) - 1];
       other.field[lane].splice(other.field[lane].indexOf(removed), 1);
       other.discard.push(removed);
+      p.revealedThisTurn = true;
       addLog(G, Number(key), 'effect', 'log.remove', { card: removed.id });
     }
   }
-  checkSynergy(G, key, fieldName, random);
+  if (checkSynergy(G, key, fieldName, random)) p.revealedThisTurn = true;
   calcScore(G);
 };
+
+/** Undo is only safe while a play has not revealed randomness or hidden
+ *  information: once the player has seen a synergy roll, a drawn card or an
+ *  opponent's negated event, taking the move back would turn that knowledge
+ *  into a free preview. Only the current player can undo, so only their flag
+ *  matters. */
+const playCardUndoable = ({ G, ctx }: { G: G; ctx: { currentPlayer: string } }) =>
+  !G.players[ctx.currentPlayer as Player].revealedThisTurn;
 
 /** Closes the semester once the opponent has already passed, then hands the
  *  next semester to whoever lost it. */
@@ -228,6 +247,7 @@ export const AcademiaArena: Game<G> = {
         discard: [], score: { Presentations: 0, Assignments: 0, Exams: 0, total: 0 },
         roundsWon: 0, passed: false, playedThisTurn: false, stamina: initStamina(traits),
         traitUses: {}, probabilityLockActive: false, statusOverrideActive: false,
+        revealedThisTurn: false,
       };
     };
     const players = { '0': makePlayer('0'), '1': makePlayer('1') };
@@ -254,6 +274,7 @@ export const AcademiaArena: Game<G> = {
         onBegin: ({ G, ctx }) => {
           const p = G.players[ctx.currentPlayer as Player];
           p.playedThisTurn = false;
+          p.revealedThisTurn = false;
           for (const t of p.traits) {
             if (t.passiveEffect === 'drawOnTurnStart' && p.deck.length) {
               p.hand.push(p.deck.pop()!);
@@ -271,7 +292,7 @@ export const AcademiaArena: Game<G> = {
     if (a || b) return { winner: a ? '0' : '1' };
   },
   moves: {
-    playCard,
+    playCard: { move: playCard, undoable: playCardUndoable },
     pass,
     finishTurn,
     useStamina: { move: useStamina, undoable: false },
