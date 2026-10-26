@@ -10,10 +10,10 @@
 </div>
 
 ## 📖 游戏规则手册
-查看[游戏规则手册](assets/game-handbook.pdf)以了解详细规则和机制。
+查看[游戏规则手册](public/game-handbook.pdf)以了解详细规则和机制。
 
 ## 🧑‍🎨 设计师声明
-阅读[设计师声明](assets/designer-statement.md)以了解该游戏如何与 GMST 475 课程的框架相结合。
+阅读[设计师声明](public/designer-statement.md)以了解该游戏如何与 GMST 475 课程的框架相结合。
 
 ## 🎥 游戏介绍视频
 
@@ -35,7 +35,7 @@ Academia Arena 的核心在于跨越三个学术领域部署角色卡和事件�
 游戏开始时，每位玩家会随机分配到三个独特**特性**的组合：
 - **背景 (Background)**：例如，本地生 (Domestic)、国际生 (International)、少数族裔 (Minority)
 - **生理 (Physiological)**：例如，健身猛男 (Gym Bro)、瘦弱书呆子 (Skinny Nerd)、身体残障 (Physically Impaired)
-- **心理 (Psychological)**：例如，多动症 (ADHD)、抽动秽语综合征 (Tourette's)、抑郁症 (Depression)
+- **心理 (Psychological)**：例如，多动症 (ADHD)、冷静头脑 (Calm Mind)、抑郁症 (Depression)
 
 这些特性通过被动增益或主动能力影响游戏玩法，塑造每场比赛的策略。系统会评估特性组合的隐性强度，较弱的组合将获得更高的初始**精力值 (Stamina)** 储备。
 
@@ -61,7 +61,7 @@ Academia Arena 的核心在于跨越三个学术领域部署角色卡和事件�
 ## ⚡ 精力机制 (Stamina System)
 精力值是支撑学术对抗的核心资源，玩家可通过消耗精力来干预概率或优化状态：
 - **概率锁定 (2 精力)**：将消耗 2 点精力值，将卡牌协同的随机结果（如 50% 收益翻倍）强制锁定为正面收益。
-- **状态压制 (1 精力)**：消耗 1 点精力值，在本回合内使自身的负面特征效果失效。
+- **状态压制 (1 精力)**：消耗 1 点精力值，在本学期结算前使自身的负面特征效果失效。
 - **资源置换 (3 精力)**：消耗 3 点精力值，从牌库额外抽取一张卡牌。
 
 ---
@@ -86,4 +86,12 @@ Academia Arena 的核心在于跨越三个学术领域部署角色卡和事件�
 ---
 
 ## 🔧 安装与使用
-这目前是一个设计原型。你可以尝试[在线原型](https://thedavidweng.github.io/Academia-Arena/)来体验游戏玩法，但请注意游戏逻辑尚未完成，无法完全运行。
+本游戏是基于 boardgame.io 的 React + TypeScript 应用。可直接[在线游玩](https://thedavidweng.github.io/Academia-Arena/)，或在本地运行：
+
+```bash
+pnpm install --frozen-lockfile
+pnpm dev        # 开发服务器
+pnpm check      # 引擎与 i18n 测试，然后 TypeScript 检查与生产构建
+```
+
+两种模式都完全在浏览器内通过 boardgame.io 的 Local 传输运行：单人对战 AI，以及本地双人轮流操作。项目结构、规则细节与 CI 配置见 [docs/development.md](docs/development.md)。

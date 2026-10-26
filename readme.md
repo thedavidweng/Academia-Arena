@@ -10,10 +10,10 @@
 </div>
 
 ## 📖 Game Rulebook
-[Check the Game Rulebook](assets/game-handbook.pdf) for detailed rules and mechanics.
+[Check the Game Rulebook](public/game-handbook.pdf) for detailed rules and mechanics.
 
 ## 🧑‍🎨 Designer Statement
-[Read the Designer Statement](assets/designer-statement.md) to see how this game engages with the frameworks of the GMST 475 course.
+[Read the Designer Statement](public/designer-statement.md) to see how this game engages with the frameworks of the GMST 475 course.
 
 ## 🎥 Game Intro Video
 
@@ -35,7 +35,7 @@ Players accumulate **Credits** (points) and activate abilities through strategic
 At the beginning of the game, each player is randomly assigned a unique combination of three **Traits**:
 - **Background**: e.g., Domestic, International, Minority
 - **Physiological**: e.g., Gym Bro, Skinny Nerd, Physically Impaired
-- **Psychological**: e.g., ADHD, Tourette's, Depression
+- **Psychological**: e.g., ADHD, Calm Mind, Depression
 
 These traits affect gameplay through passive buffs or active abilities that shape each match’s strategy. The system evaluates the implicit strength of the trait combination; weaker combinations receive a higher initial **Stamina** reserve.
 
@@ -61,7 +61,7 @@ These traits affect gameplay through passive buffs or active abilities that shap
 ## ⚡ Stamina System
 Stamina is a core resource used to manipulate outcomes or optimize player performance:
 - **Probability Lock (2 Stamina)**: Consumes 2 Stamina to force a positive outcome for random card synergies (e.g., locking a 50% chance to double credits).
-- **Status Suppression (1 Stamina)**: Consumes 1 Stamina to negate one's own negative trait effects for the current turn.
+- **Status Suppression (1 Stamina)**: Consumes 1 Stamina to negate your own negative trait effects until the semester is scored.
 - **Resource Exchange (3 Stamina)**: Consumes 3 Stamina to draw an extra card from the deck.
 
 ---
@@ -86,4 +86,15 @@ Players don’t fully redraw each round, and **remaining Stamina carries over** 
 ---
 
 ## 🔧 Installation & Usage
-This is currently a design prototype. You can try out the live prototype to experience the gameplay, but please be aware that the game logic is not complete and cannot run fully.
+The game is a React + TypeScript application built on boardgame.io. Play it online at
+<https://thedavidweng.github.io/Academia-Arena/>, or run it locally:
+
+```bash
+pnpm install --frozen-lockfile
+pnpm dev        # development server
+pnpm check      # engine and i18n tests, then TypeScript and production build
+```
+
+Both game modes run entirely in the browser over boardgame.io's Local transport:
+single player against a bot, and local two-player pass-and-play. See
+[docs/development.md](docs/development.md) for the project layout, rule details and CI setup.
