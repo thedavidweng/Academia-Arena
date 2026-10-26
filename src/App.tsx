@@ -78,7 +78,7 @@ export default function App() {
             aria-label={t('app.language')}
             className="label text-xs uppercase tracking-wider text-on-surface/40 hover:text-on-surface transition-colors"
           >
-            {lang === 'en' ? '中文' : 'EN'}
+            {t('app.languageName')}
           </button>
         </div>
 
@@ -108,7 +108,7 @@ export default function App() {
         </button>
 
         <div className="absolute bottom-6 label text-[10px] text-on-surface/20 uppercase tracking-widest">
-          v1.0 — boardgame.io + React
+          {t('app.version')}
         </div>
       </div>
     );

@@ -49,7 +49,7 @@ export function Arena(props: ArenaProps) {
       <div className="flex flex-wrap items-center gap-4 label text-sm">
         <span>{t('round.semester')} {G.round}</span>
         <span>{t('game.player', { player: Number(myKey) + 1 })}</span>
-        <button onClick={toggleLang}>{isZh ? 'EN' : '中文'}</button>
+        <button onClick={toggleLang}>{t('app.languageName')}</button>
       </div>
     </header>
   );

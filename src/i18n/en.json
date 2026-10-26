@@ -53,6 +53,8 @@
   "app.musicOff": "Music off",
   "app.music": "Background music",
   "app.language": "Switch language",
+  "app.languageName": "中文",
+  "app.version": "v1.0 — boardgame.io + React",
   "game.player": "Player {{player}}",
   "game.handoff": "Pass the screen to Player {{player}}",
   "game.ready": "Reveal my hand",

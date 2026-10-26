@@ -53,6 +53,8 @@
   "app.musicOff": "音乐关",
   "app.music": "背景音乐",
   "app.language": "切换语言",
+  "app.languageName": "EN",
+  "app.version": "v1.0 — boardgame.io + React",
   "game.player": "玩家 {{player}}",
   "game.handoff": "请将屏幕交给玩家 {{player}}",
   "game.ready": "查看我的手牌",

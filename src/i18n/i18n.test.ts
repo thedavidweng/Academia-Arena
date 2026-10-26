@@ -19,13 +19,16 @@ describe('translations', () => {
     expect(keysOf(zh)).toEqual(keysOf(en));
   });
 
-  it('has no empty or untranslated values', () => {
+  it('has no empty values and no accidentally identical translations', () => {
     for (const [key, value] of Object.entries({ ...en, ...zh })) {
       expect(typeof value, key).toBe('string');
       expect((value as string).trim(), key).not.toBe('');
     }
-    expect(Object.entries(zh).filter(([key, value]) => value === (en as never)[key]))
-      .toEqual([]);
+    // Technical labels are intentionally identical in both languages.
+    const identical = ['app.version'];
+    expect(Object.entries(zh).filter(([key, value]) =>
+      value === (en as never)[key] && !identical.includes(key)
+    )).toEqual([]);
   });
 
   it('defines every literal key used in components', () => {

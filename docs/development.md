@@ -23,7 +23,7 @@ pnpm preview                     # 预览 dist/
 
 ```
 src/
-├── data/entities.ts    卡牌与特质数据（从原型的 index.html 提取）
+├── data/entities.ts    卡牌与特质数据（从原型页面提取，原型已删除）
 ├── game/game.ts        boardgame.io Game 定义：moves、phases、AI enumerate
 ├── game/types.ts       G 与 move 参数类型
 ├── components/         Arena（棋盘容器）、Card、Lane、StaminaAction、GameLog

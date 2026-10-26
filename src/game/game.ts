@@ -1,7 +1,7 @@
 import { INVALID_MOVE } from 'boardgame.io/core';
 import type { Game, FnContext } from 'boardgame.io';
 import { cardLibrary, traitLibrary, type FieldName, type TraitDefinition } from '../data/entities';
-import type { G, CardInstance, PlayCardParams, StaminaActionParams } from './types';
+import type { G, CardInstance, PlayCardParams, StaminaActionParams, UseTraitParams } from './types';
 
 const fields: FieldName[] = ['Presentations', 'Assignments', 'Exams'];
 type Random = FnContext<G>['random'];
@@ -153,22 +153,29 @@ const playCard = ({ G, playerID, random }: FnContext<G>, { handIndex, fieldName 
   calcScore(G);
 };
 
+/** Closes the semester once the opponent has already passed, then hands the
+ *  next semester to whoever lost it. */
+function endSemesterIfOpponentDone(G: G, key: Player, events: FnContext<G>['events']): void {
+  if (!G.players[opponent(key)].passed) {
+    events.endTurn();
+    return;
+  }
+  const starter = endRound(G);
+  if (starter) events.endTurn({ next: starter });
+}
+
 const pass = ({ G, playerID, events }: FnContext<G>) => {
   const key = playerID as Player;
   if (G.players[key].playedThisTurn) return INVALID_MOVE;
   G.players[key].passed = true;
   addLog(G, Number(key), 'pass', 'log.pass');
-  if (!G.players[opponent(key)].passed) return events.endTurn();
-  const starter = endRound(G);
-  if (starter) events.endTurn({ next: starter });
+  endSemesterIfOpponentDone(G, key, events);
 };
 
 const finishTurn = ({ G, playerID, events }: FnContext<G>) => {
   const key = playerID as Player;
   if (!G.players[key].playedThisTurn) return INVALID_MOVE;
-  if (!G.players[opponent(key)].passed) return events.endTurn();
-  const starter = endRound(G);
-  if (starter) events.endTurn({ next: starter });
+  endSemesterIfOpponentDone(G, key, events);
 };
 
 const useStamina = ({ G, playerID }: FnContext<G>, { action }: StaminaActionParams) => {
@@ -197,7 +204,7 @@ const useStamina = ({ G, playerID }: FnContext<G>, { action }: StaminaActionPara
   addLog(G, Number(playerID), 'stamina', `log.${action}`);
 };
 
-const useTraitSkill = ({ G, playerID, random }: FnContext<G>, { traitIndex }: { traitIndex: number }) => {
+const useTraitSkill = ({ G, playerID, random }: FnContext<G>, { traitIndex }: UseTraitParams) => {
   const p = G.players[playerID as Player];
   if (!Number.isInteger(traitIndex) || p.passed) return INVALID_MOVE;
   const t = p.traits[traitIndex];

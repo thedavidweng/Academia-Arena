@@ -39,6 +39,48 @@ function match(change: (G: G) => void = () => {}) {
 
 const settle = () => new Promise(resolve => setTimeout(resolve, 25));
 
+describe('initial stamina from trait weight', () => {
+  it('derives starting stamina from the assigned traits', () => {
+    const expected = (traits: TraitDefinition[]) => {
+      const weight = traits.reduce((sum, t) => sum + (t.passiveValue || 0)
+        + (t.passiveEffect === 'drawOnTurnStart' ? 1.5 : 0)
+        + (t.passiveEffect === 'comebackBonus' ? 0.5 : 0)
+        + (t.activeAbility ? 1 : 0)
+        - (t.passiveEffect === 'opponentStarts' ? 0.5 : 0), 0);
+      return Math.max(3, Math.min(8, Math.round(8 - weight)));
+    };
+    for (const seed of ['stamina-a', 'stamina-b', 'stamina-c', 'stamina-d']) {
+      const game: Game<G> = { ...AcademiaArena, seed };
+      const client = Client({ game, debug: false });
+      client.start();
+      const G = client.getState()!.G;
+      for (const key of ['0', '1'] as const) {
+        expect(G.players[key].traits).toHaveLength(3);
+        expect(G.players[key].stamina, `${seed} player ${key}`)
+          .toBe(expected(G.players[key].traits));
+      }
+    }
+  });
+
+  it('gives a weaker trait combination more stamina than a stronger one', () => {
+    const stamina = (traits: TraitDefinition[]) => {
+      const weight = traits.reduce((sum, t) => sum + (t.passiveValue || 0)
+        + (t.passiveEffect === 'drawOnTurnStart' ? 1.5 : 0)
+        + (t.passiveEffect === 'comebackBonus' ? 0.5 : 0)
+        + (t.activeAbility ? 1 : 0)
+        - (t.passiveEffect === 'opponentStarts' ? 0.5 : 0), 0);
+      return Math.max(3, Math.min(8, Math.round(8 - weight)));
+    };
+    const weak = stamina([trait('trait_local'), trait('trait_impaired'), trait('trait_adhd')]);
+    const strong = stamina([trait('trait_intl'), trait('trait_gym'), trait('trait_skinny')]);
+    // local 1.5 + impaired -0.5 + adhd 1 = weight 2 -> 6 stamina
+    // intl 1 + gym 1 + skinny 1 = weight 3 -> 5 stamina
+    expect(weak).toBe(6);
+    expect(strong).toBe(5);
+    expect(weak).toBeGreaterThan(strong);
+  });
+});
+
 describe('first player and semester boundaries', () => {
   it('gives the first turn to the opponent of a Physically Impaired player', () => {
     const c = match(G => {
