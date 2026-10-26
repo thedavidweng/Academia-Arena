@@ -257,6 +257,25 @@ describe('trait and stamina boundaries', () => {
     expect(G.log.some(e => e.detail === 'log.remove')).toBe(true);
   });
 
+  it('does not let undo hide a drawn card or a spent stamina action', () => {
+    const c = match(G => { G.players['0'].stamina = 8; });
+    const hand = c.getState()!.G.players['0'].hand.length;
+    c.moves.useStamina({ action: 'drawCard' });
+    expect(c.getState()!.G.players['0'].hand).toHaveLength(hand + 1);
+    c.undo();
+    const G = c.getState()!.G.players['0'];
+    expect(G.hand).toHaveLength(hand + 1);
+    expect(G.stamina).toBe(5);
+  });
+
+  it('still allows undo before committing a card', () => {
+    const c = match();
+    const hand = c.getState()!.G.players['0'].hand.length;
+    c.moves.playCard({ handIndex: 0, fieldName: 'Exams' });
+    c.undo();
+    expect(c.getState()!.G.players['0'].hand).toHaveLength(hand);
+  });
+
   it('offers the bot its stamina actions and trait skill', () => {
     const c = match(G => {
       G.players['0'].traits = [trait('trait_adhd')];

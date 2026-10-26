@@ -263,7 +263,13 @@ export const AcademiaArena: Game<G> = {
     if (a && b) return { draw: true };
     if (a || b) return { winner: a ? '0' : '1' };
   },
-  moves: { playCard, pass, finishTurn, useStamina, useTraitSkill },
+  moves: {
+    playCard,
+    pass,
+    finishTurn,
+    useStamina: { move: useStamina, undoable: false },
+    useTraitSkill: { move: useTraitSkill, undoable: false },
+  },
   ai: {
     enumerate: (G, ctx, playerID) => {
       if (ctx.phase === 'traitAnimation') return [{ move: 'confirmTraits' }];
