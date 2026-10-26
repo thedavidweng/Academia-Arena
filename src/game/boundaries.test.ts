@@ -243,6 +243,35 @@ describe('trait and stamina boundaries', () => {
     expect(G.players['0'].discard.map(x => x.id)).toEqual(['event_allnighter']);
     expect(G.log.some(e => e.detail === 'log.negate')).toBe(true);
   });
+
+  it('removes the opponent synergy card from a lane other than the one played into', () => {
+    const c = match(G => {
+      G.players['0'].hand = [card('event_conflict', 'conflict')];
+      G.players['1'].field.Presentations = [];
+      G.players['1'].field.Assignments = [card('richkid1', 'ghost')];
+    });
+    c.moves.playCard({ handIndex: 0, fieldName: 'Exams' });
+    const G = c.getState()!.G;
+    expect(G.players['1'].field.Assignments).toHaveLength(0);
+    expect(G.players['1'].discard.map(x => x.id)).toEqual(['richkid1']);
+    expect(G.log.some(e => e.detail === 'log.remove')).toBe(true);
+  });
+
+  it('offers the bot its stamina actions and trait skill', () => {
+    const c = match(G => {
+      G.players['0'].traits = [trait('trait_adhd')];
+      G.players['0'].stamina = 8;
+      G.players['0'].deck = [card('nerd1', 'd')];
+      G.players['0'].hand = [card('nerd1', 'h')];
+    });
+    const G = c.getState()!.G;
+    const moves = AcademiaArena.ai!.enumerate(G, c.getState()!.ctx, '0');
+    const names = moves.map(m => ('move' in m ? m.move : ''));
+    expect(names).toContain('useStamina');
+    expect(names).toContain('useTraitSkill');
+    expect(moves).toContainEqual({ move: 'useStamina', args: [{ action: 'probabilityLock' }] });
+    expect(moves).toContainEqual({ move: 'useTraitSkill', args: [{ traitIndex: 0 }] });
+  });
 });
 
 describe('local transport and bot integration', () => {

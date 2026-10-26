@@ -139,10 +139,12 @@ const playCard = ({ G, playerID, random }: FnContext<G>, { handIndex, fieldName 
     for (const c of p.field[fieldName]) c.credits[fieldName] += card.effectValue!;
     addLog(G, Number(key), 'effect', 'log.boost', { field: fieldName });
   } else if (card.deployEffect === 'removeSynergyCard') {
-    const candidates = other.field[fieldName].filter(c => c.synergy);
-    if (candidates.length) {
+    const lanes = fields.filter(f => other.field[f].some(c => c.synergy));
+    if (lanes.length) {
+      const lane = lanes[random.Die(lanes.length) - 1];
+      const candidates = other.field[lane].filter(c => c.synergy);
       const removed = candidates[random.Die(candidates.length) - 1];
-      other.field[fieldName].splice(other.field[fieldName].indexOf(removed), 1);
+      other.field[lane].splice(other.field[lane].indexOf(removed), 1);
       other.discard.push(removed);
       addLog(G, Number(key), 'effect', 'log.remove', { card: removed.id });
     }
@@ -267,10 +269,25 @@ export const AcademiaArena: Game<G> = {
       if (ctx.phase === 'traitAnimation') return [{ move: 'confirmTraits' }];
       const p = G.players[playerID as Player];
       if (p.playedThisTurn) return [{ move: 'finishTurn' }];
+      const stamina = [
+        ...(!p.probabilityLockActive && p.stamina >= 2
+          ? [{ move: 'useStamina', args: [{ action: 'probabilityLock' }] }] : []),
+        ...(!p.statusOverrideActive && p.stamina >= 1
+          ? [{ move: 'useStamina', args: [{ action: 'statusOverride' }] }] : []),
+        ...(p.deck.length && p.stamina >= 3
+          ? [{ move: 'useStamina', args: [{ action: 'drawCard' }] }] : []),
+      ];
+      const skills = p.traits.flatMap((trait, traitIndex) =>
+        trait.activeAbility && p.hand.length
+          && (p.traitUses[trait.id] || 0) < trait.limitPerRound!
+          ? [{ move: 'useTraitSkill', args: [{ traitIndex }] }] : []
+      );
       return [
         ...p.hand.flatMap((_, handIndex) => fields.map(fieldName => ({
           move: 'playCard', args: [{ handIndex, fieldName }],
         }))),
+        ...stamina,
+        ...skills,
         { move: 'pass' },
       ];
     },

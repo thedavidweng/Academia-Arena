@@ -37,7 +37,7 @@ export function Card({ card, selected, onClick, compact }: CardProps) {
       )}
     >
       <div>
-        <div className={cn('font-bold leading-tight', compact ? 'text-xs' : 'text-sm')}>
+        <div className={cn('font-display font-bold leading-tight', compact ? 'text-xs' : 'text-sm')}>
           {name}
         </div>
         <div className="label text-[10px] text-on-surface/50 uppercase tracking-wider mt-0.5">

@@ -90,7 +90,14 @@ export function Arena(props: ArenaProps) {
     <strong>{t('game.player', { player: Number(key) + 1 })}</strong>
     <span>{t('game.score')}: {G.players[key].score.total}</span>
     <span>{t('game.semestersWon')}: {G.players[key].roundsWon}</span>
-    <span>{t('game.stamina')}: {G.players[key].stamina}</span>
+    <span className="flex items-center gap-2" title={`${t('game.stamina')}: ${G.players[key].stamina}`}>
+      {t('game.stamina')}
+      <span aria-label={`${t('game.stamina')}: ${G.players[key].stamina}`} role="img"
+        className="flex gap-0.5">
+        {Array.from({ length: 8 }, (_, i) => <span key={i}
+          className={cn('stamina-segment', i < G.players[key].stamina ? 'filled' : 'empty')} />)}
+      </span>
+    </span>
   </div>;
   return <main>{header}
     <div className="flex flex-wrap gap-4 p-4 surface-low label text-sm items-center">

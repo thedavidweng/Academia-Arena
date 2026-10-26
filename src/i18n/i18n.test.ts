@@ -55,4 +55,19 @@ describe('translations', () => {
       expect(placeholders((zh as never)[key]), key).toEqual(placeholders((en as never)[key]));
     }
   });
+
+  it('has no key that no component or engine path can reach', () => {
+    const reachable = new Set([
+      ...[...source.matchAll(/\bt\(\s*'([a-zA-Z][\w.]*)'/g)].map(m => m[1]),
+      ...[...source.matchAll(/\bt\(\s*[\w.]+ \? '([a-zA-Z][\w.]*)' : '([a-zA-Z][\w.]*)'/g)]
+        .flatMap(m => [m[1], m[2]]),
+      ...['Presentations', 'Assignments', 'Exams'].map(field => `field.${field}`),
+      ...['play', 'draw', 'boost', 'remove', 'negate', 'synergySuccess', 'synergyFailure',
+        'pass', 'probabilityLock', 'statusOverride', 'drawCard', 'adhd', 'tie', 'roundWinner']
+        .map(name => `log.${name}`),
+      ...['drawCard', 'boostField', 'removeSynergyCard'].map(name => `effect.${name}`),
+      ...['probabilityLock', 'statusOverride', 'drawCard'].map(name => `stamina.${name}`),
+    ]);
+    expect(keysOf(en).filter(key => !reachable.has(key))).toEqual([]);
+  });
 });

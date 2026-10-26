@@ -47,26 +47,9 @@ h1, h2, h3, h4, h5, h6 {
   background-color: #ffffff;
 }
 
-/* Ambient shadow */
-.ambient-shadow {
-  box-shadow: 0 20px 40px rgba(29, 28, 23, 0.06);
-}
-
-/* Glassmorphism overlay */
-.glass-overlay {
-  background-color: rgba(254, 249, 241, 0.8);
-  backdrop-filter: blur(12px);
-}
-
 /* Exam zone gradient */
 .exam-gradient {
   background: linear-gradient(135deg, #aa301a, #cb4830);
-}
-
-/* Bleed text effect */
-.bleed-text {
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 
 /* Card hover */
@@ -117,16 +100,4 @@ h1, h2, h3, h4, h5, h6 {
   outline: 2px dashed #aa301a;
   outline-offset: -2px;
   background-color: rgba(170, 48, 26, 0.04);
-}
-
-/* Tooltip */
-.tooltip {
-  background-color: #1d1c17;
-  color: #fef9f1;
-  font-family: 'Space Grotesk', monospace;
-  font-size: 0.75rem;
-  padding: 4px 8px;
-  white-space: nowrap;
-  pointer-events: none;
-  transition: opacity 0ms;
 }

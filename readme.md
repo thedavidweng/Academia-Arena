@@ -35,7 +35,7 @@ Players accumulate **Credits** (points) and activate abilities through strategic
 At the beginning of the game, each player is randomly assigned a unique combination of three **Traits**:
 - **Background**: e.g., Domestic, International, Minority
 - **Physiological**: e.g., Gym Bro, Skinny Nerd, Physically Impaired
-- **Psychological**: e.g., ADHD, Tourette's, Depression
+- **Psychological**: e.g., ADHD, Calm Mind, Depression
 
 These traits affect gameplay through passive buffs or active abilities that shape each match’s strategy. The system evaluates the implicit strength of the trait combination; weaker combinations receive a higher initial **Stamina** reserve.
 
@@ -61,7 +61,7 @@ These traits affect gameplay through passive buffs or active abilities that shap
 ## ⚡ Stamina System
 Stamina is a core resource used to manipulate outcomes or optimize player performance:
 - **Probability Lock (2 Stamina)**: Consumes 2 Stamina to force a positive outcome for random card synergies (e.g., locking a 50% chance to double credits).
-- **Status Suppression (1 Stamina)**: Consumes 1 Stamina to negate one's own negative trait effects for the current turn.
+- **Status Suppression (1 Stamina)**: Consumes 1 Stamina to negate your own negative trait effects until the semester is scored.
 - **Resource Exchange (3 Stamina)**: Consumes 3 Stamina to draw an extra card from the deck.
 
 ---
