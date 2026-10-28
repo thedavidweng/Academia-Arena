@@ -13,8 +13,8 @@ commands, the file layout, the rule set and the CI jobs.
 - Keep game logic in `src/game/` free of React imports so the same `Game` object can run
   on a server later.
 - Keep every user-visible string in both `src/i18n/en.json` and `src/i18n/zh.json`.
-  `src/i18n/i18n.test.ts` fails when a key is missing from either language or when a
-  component uses a key that does not exist.
+  `src/i18n/i18n.test.ts` checks language parity and dynamic keys; verify component
+  keys when adding or changing them.
 - Add a failing assertion in `src/game/boundaries.test.ts` before changing a rule, and
   make it pass with the smallest change to `src/game/game.ts`.
 - Pin GitHub Actions by full commit SHA. `bun run check` must pass locally before a pull
