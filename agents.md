@@ -17,6 +17,6 @@ commands, the file layout, the rule set and the CI jobs.
   component uses a key that does not exist.
 - Add a failing assertion in `src/game/boundaries.test.ts` before changing a rule, and
   make it pass with the smallest change to `src/game/game.ts`.
-- Pin GitHub Actions by full commit SHA. `pnpm check` must pass locally before a pull
+- Pin GitHub Actions by full commit SHA. `bun run check` must pass locally before a pull
   request is opened; `CI` runs the same command.
 - `vite.config.ts` keeps `base: "/Academia-Arena/"`; changing it breaks the Pages URL.
