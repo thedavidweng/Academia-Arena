@@ -3,6 +3,7 @@
 // =============================================================================
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import type { TranslationKey } from '@/i18n';
 import type { GameLogEntry } from '../game/types';
 import { cardLibrary } from '../data/entities';
 import { cn } from '../lib/utils';
@@ -57,10 +58,10 @@ export function GameLog({ log }: GameLogProps) {
                 [{entry.round}] {entry.player >= 0 ? t('game.player', { player: entry.player + 1 }) : ''}
               </span>{' '}
               <span className={cn(actionColor(entry.action))}>
-                {t(entry.detail, Object.fromEntries(Object.entries(entry.values).map(([key, value]) => {
+                {t(entry.detail as TranslationKey, Object.fromEntries(Object.entries(entry.values).map(([key, value]) => {
                   const card = key === 'card' ? cardLibrary.find(c => c.id === value) : undefined;
                   return [key, card ? (i18n.language === 'zh' ? card.nameZh : card.name)
-                    : key === 'field' ? t(`field.${value}`) : value];
+                    : key === 'field' ? t(`field.${value}` as TranslationKey) : value];
                 })))}
               </span>
             </div>

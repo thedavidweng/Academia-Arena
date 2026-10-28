@@ -20,4 +20,13 @@ i18n.on('languageChanged', language => {
   }
 });
 
+export type TranslationKey = keyof typeof en;
+
 export default i18n;
+
+declare module 'i18next' {
+  interface CustomTypeOptions {
+    keySeparator: false;
+    resources: { translation: typeof en };
+  }
+}
