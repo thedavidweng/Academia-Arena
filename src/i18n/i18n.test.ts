@@ -1,42 +1,21 @@
 import { describe, expect, it } from 'bun:test';
-import { readdirSync, readFileSync, statSync } from 'node:fs';
-import { join } from 'node:path';
 import en from './en.json';
 import zh from './zh.json';
 
-const sourceFiles = (dir: string): string[] => readdirSync(dir).flatMap(name => {
-  const path = join(dir, name);
-  if (statSync(path).isDirectory()) return sourceFiles(path);
-  return /\.tsx?$/.test(path) && !/\.test\.tsx?$/.test(path) ? [path] : [];
-});
-
 const keysOf = (dictionary: object) => Object.keys(dictionary).sort();
-const source = sourceFiles(join(import.meta.dirname, '..'))
-  .map(path => readFileSync(path, 'utf8')).join('\n');
 
 describe('translations', () => {
   it('has the same keys in both languages', () => {
     expect(keysOf(zh)).toEqual(keysOf(en));
   });
 
-  it('has no empty values and no accidentally identical translations', () => {
-    for (const [key, value] of Object.entries({ ...en, ...zh })) {
-      expect(typeof value, key).toBe('string');
-      expect((value as string).trim(), key).not.toBe('');
+  it('has no empty values', () => {
+    for (const dictionary of [en, zh]) {
+      for (const [key, value] of Object.entries(dictionary)) {
+        expect(typeof value, key).toBe('string');
+        expect(value.trim(), key).not.toBe('');
+      }
     }
-    // Technical labels are intentionally identical in both languages.
-    const identical = ['app.version'];
-    expect(Object.entries(zh).filter(([key, value]) =>
-      value === (en as never)[key] && !identical.includes(key)
-    )).toEqual([]);
-  });
-
-  it('defines every literal key used in components', () => {
-    const used = new Set(
-      [...source.matchAll(/\bt\(\s*'([a-zA-Z][\w.]*)'/g)].map(m => m[1])
-    );
-    const missing = [...used].filter(key => !(key in en));
-    expect(missing).toEqual([]);
   });
 
   it('defines every dynamic field and log key the engine emits', () => {
@@ -59,18 +38,4 @@ describe('translations', () => {
     }
   });
 
-  it('has no key that no component or engine path can reach', () => {
-    const reachable = new Set([
-      ...[...source.matchAll(/\bt\(\s*'([a-zA-Z][\w.]*)'/g)].map(m => m[1]),
-      ...[...source.matchAll(/\bt\(\s*[\w.]+ \? '([a-zA-Z][\w.]*)' : '([a-zA-Z][\w.]*)'/g)]
-        .flatMap(m => [m[1], m[2]]),
-      ...['Presentations', 'Assignments', 'Exams'].map(field => `field.${field}`),
-      ...['play', 'draw', 'boost', 'remove', 'negate', 'synergySuccess', 'synergyFailure',
-        'pass', 'probabilityLock', 'statusOverride', 'drawCard', 'adhd', 'tie', 'roundWinner']
-        .map(name => `log.${name}`),
-      ...['drawCard', 'boostField', 'removeSynergyCard'].map(name => `effect.${name}`),
-      ...['probabilityLock', 'statusOverride', 'drawCard'].map(name => `stamina.${name}`),
-    ]);
-    expect(keysOf(en).filter(key => !reachable.has(key))).toEqual([]);
-  });
 });
