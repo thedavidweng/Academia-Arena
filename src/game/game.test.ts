@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'bun:test';
 import { Client } from 'boardgame.io/client';
 import type { Game } from 'boardgame.io';
 import { AcademiaArena } from './game';

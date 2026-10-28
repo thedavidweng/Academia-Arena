@@ -2,18 +2,18 @@
 
 ## 环境要求
 
-- Node.js 24+
-- pnpm 10（`corepack enable pnpm`，版本由 `packageManager` 字段固定）
+- Bun 1.4.4
+- Node.js 24+（供开发服务器及默认脚本运行时使用）
 
 ## 常用命令
 
 ```bash
-pnpm install --frozen-lockfile   # 按锁文件安装
-pnpm dev                         # 开发服务器
-pnpm test                        # 引擎与 i18n 回归测试（vitest）
-pnpm build                       # TypeScript 检查 + Vite 生产构建
-pnpm check                       # test + build，CI 使用的同一条命令
-pnpm preview                     # 预览 dist/
+bun install --frozen-lockfile   # 按锁文件安装
+bun run dev                      # 开发服务器
+bun test                         # 引擎与 i18n 回归测试（Bun 测试运行器）
+bun run build                    # TypeScript 检查 + Vite 生产构建
+bun run check                    # test + build，CI 使用的同一条命令
+bun run preview                  # 预览 dist/
 ```
 
 生产构建输出在 `dist/`，Pages 部署地址为 <https://thedavidweng.github.io/Academia-Arena/>，
@@ -55,13 +55,13 @@ Node 服务端复用。
 
 ## 测试
 
-`pnpm test` 覆盖引擎边界（先手、学期结算、Best-of-3、stayOnField、负面特质压制、
+`bun test` 覆盖引擎边界（先手、学期结算、Best-of-3、stayOnField、负面特质压制、
 非法 move、协同与概率锁定、回合适配）与 i18n 完整性（两种语言键一致、无遗漏
 占位符、组件使用的键全部存在）。新增规则时同时补一条会随规则破坏而失败的断言。
 
 ## CI
 
-- `CI`：冻结安装、`pnpm check`、生产依赖审计。
+- `CI`：冻结安装、`bun run check`、依赖审计。
 - `Pages`：`main` 上构建 `dist/` 并部署到 GitHub Pages。
 - `Workflow lint`、`Mirror to Codeberg`、Dependabot 自动合并沿用既有配置。
 
